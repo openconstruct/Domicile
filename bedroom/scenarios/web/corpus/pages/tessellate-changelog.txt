@@ -1,0 +1,9 @@
+Tessellate changelog.
+
+2.4 (August): theme engine rebuilt for nested partials; incremental builds roughly twice as fast; preview server reloads on config changes.
+
+2.3 (May): new taxonomy pages, draft folders, and a fix for feeds with no dates.
+
+2.2 (February): asset pipeline gains fingerprinting; the old theme setting format is deprecated but still read.
+
+2.1 (January): first release with the built-in preview server.

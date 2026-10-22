@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/cobalt-status.txt",
+    "text": "Cobalt release status\ncurrent version: 8.6\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-edit-unique-006",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/cobalt-status.txt": "Cobalt release status\ncurrent version: 4.7\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/cobalt-status.txt, change the current version from 4.7 to 8.6. Change nothing else in the file."
+}

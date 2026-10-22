@@ -1,0 +1,32 @@
+{
+ "archetype": "bash-find",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/deep/nested/alpha-5.log",
+   "/data/exports/delta-11.log",
+   "/data/gamma-22.log",
+   "/data/old/beta-34.log"
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-find-056",
+ "max_turns": 6,
+ "notes": "find vs top-level ls; suffix bait (.bak) and nested folders.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/catalog.txt": "data\n",
+   "/data/deep/nested/alpha-5.log": "data\n",
+   "/data/exports/delta-11.log": "data\n",
+   "/data/gamma-22.log": "data\n",
+   "/data/old/beta-34.log": "data\n",
+   "/data/old/first-1.log.bak": "data\n"
+  }
+ },
+ "situation": "List every file under /data whose name ends in .log \u2014 full paths, one per line, nothing else in your answer."
+}

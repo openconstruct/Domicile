@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "subject_contains": "Sextant",
+    "to_contains": "omar@mail.example",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-058",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/cobalt-ops.txt": "Cobalt ops notes.\nThe shipped default retention window for Cobalt snapshots is 21 days.\n",
+   "/notes/sextant-ops.txt": "Sextant ops notes.\nThe shipped default retention window for Sextant snapshots is 14 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Sextant snapshots. What is it, in days?",
+     "from": "omar@mail.example",
+     "id": "msg-101",
+     "subject": "Sextant retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Cobalt -- the shipped default retention window, in days? (Answer on the Cobalt thread, not this one.)",
+     "from": "omar@mail.example",
+     "id": "msg-102",
+     "subject": "Cobalt retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Omar emailed asking for the shipped default retention window for Sextant snapshots for the runbook. Find the email, check the ops notes, and reply to Omar with the window. Reply only to that email."
+}

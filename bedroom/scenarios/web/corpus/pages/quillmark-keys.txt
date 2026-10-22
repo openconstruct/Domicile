@@ -1,0 +1,9 @@
+Quillmark keyboard shortcuts.
+
+Navigation: Ctrl+P quick-open a note, Ctrl+Shift+F search all notebooks, Alt+arrows move between recently opened notes.
+
+Formatting: Ctrl+B bold, Ctrl+I italic, Ctrl+K insert link, Ctrl+Shift+7 toggle a task list.
+
+Windows: Ctrl+\ splits the editor, Ctrl+W closes the current pane, F11 toggles the distraction-free window.
+
+Every shortcut can be rebound in settings; conflicts are flagged in red before you save them.

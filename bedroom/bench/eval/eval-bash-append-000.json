@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-append",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/logs/shift.txt",
+    "text": "# Vessel shift log, week 20\n06:00 shift opened\n09:15 deliveries in\n15:45 stock rotated\n22:00 shift closed\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "eval-bash-append-000",
+ "max_turns": 6,
+ "notes": "Append, not rewrite: no shell, so no redirection; sed -i '$a<line>' appends in place.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/shift.txt": "# Vessel shift log, week 20\n06:00 shift opened\n09:15 deliveries in\n15:45 stock rotated\n"
+  }
+ },
+ "situation": "Add one line to the end of /logs/shift.txt: 22:00 shift closed. The existing entries must stay exactly as they are."
+}

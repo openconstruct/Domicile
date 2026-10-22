@@ -1,0 +1,38 @@
+{
+ "difficulty": 3,
+ "expected": {
+  "final_answer_contains": [
+   "parallelism is 4"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch",
+   "WebFetch"
+  ]
+ },
+ "family": "web-compare",
+ "id": "web-0007",
+ "max_turns": 5,
+ "notes": "Conflicting sources: the March announcement says 8, the June correction says 4 and explicitly supersedes it. Two fetches are required, and the final answer only passes from the newer page.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "Announcing Latticework 5 (March).\n\nLatticework 5 ships with a new scheduler and a rewritten task graph. Among the new defaults: Latticework 5's default parallelism is 8 workers out of the box, up from the previous release.\n\nExisting configuration files keep working; the parallelism setting only changes for projects that never set it.",
+     "snippet": "Latticework 5 is here: a new scheduler, faster workers, and new defaults for parallelism.",
+     "title": "Announcing Latticework 5 (March)",
+     "url": "https://latticework.example/blog/latticework-5-announcement"
+    },
+    {
+     "body": "Correction: Latticework 5 defaults (June).\n\nOur March announcement misstated one default, and this post corrects it. Latticework 5's default parallelism is 4 workers, not 8 as announced in March. The March post has been left up for the record; this correction supersedes it.\n\nEverything else in the announcement stands. If you sized a machine around the March figure, halve the worker count in your plans.",
+     "snippet": "An update to our March announcement about Latticework 5 and its default settings.",
+     "title": "Correction: Latticework 5 defaults (June)",
+     "url": "https://latticework.example/blog/latticework-5-correction"
+    }
+   ]
+  }
+ },
+ "situation": "What is Latticework 5's default parallelism? There was a launch announcement and a later correction; open both pages and answer from the newer information."
+}

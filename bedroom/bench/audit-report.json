@@ -1,0 +1,16 @@
+{
+ "pools": {
+  "train": {
+   "n": 1680,
+   "failures": []
+  },
+  "dev": {
+   "n": 96,
+   "failures": []
+  },
+  "eval": {
+   "n": 312,
+   "failures": []
+  }
+ }
+}

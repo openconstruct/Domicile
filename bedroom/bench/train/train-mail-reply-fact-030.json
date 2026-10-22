@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "45 days",
+    "subject_contains": "Parallax",
+    "to_contains": "henrik@corp.example",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-030",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fernway-ops.txt": "Fernway ops notes.\nThe shipped default retention window for Fernway snapshots is 52 days.\n",
+   "/notes/parallax-ops.txt": "Parallax ops notes.\nThe shipped default retention window for Parallax snapshots is 45 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Parallax snapshots. What is it, in days?",
+     "from": "henrik@corp.example",
+     "id": "msg-101",
+     "subject": "Parallax retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Fernway -- the shipped default retention window, in days? (Answer on the Fernway thread, not this one.)",
+     "from": "henrik@corp.example",
+     "id": "msg-102",
+     "subject": "Fernway retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Henrik emailed asking for the shipped default retention window for Parallax snapshots for the runbook. Find the email, check the ops notes, and reply to Henrik with the window. Reply only to that email."
+}

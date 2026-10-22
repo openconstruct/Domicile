@@ -1,0 +1,63 @@
+{
+ "archetype": "calendar-slot",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "start": "2026-11-14T09:00",
+    "title_contains": "Meridian planning",
+    "type": "calendar_event"
+   },
+   {
+    "start": "2026-11-14T10:30",
+    "title_contains": "Meridian planning",
+    "type": "calendar_no_event"
+   },
+   {
+    "start": "2026-11-14T13:00",
+    "title_contains": "Meridian planning",
+    "type": "calendar_no_event"
+   },
+   {
+    "start": "2026-11-14T15:30",
+    "title_contains": "Meridian planning",
+    "type": "calendar_no_event"
+   }
+  ],
+  "required_sequence": [
+   "calendar_list",
+   "calendar_create"
+  ]
+ },
+ "family": "social",
+ "id": "train-calendar-slot-026",
+ "max_turns": 6,
+ "notes": "The free slot is computed from the seeded blockers; booking a blocked candidate or a later free one both fail.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "calendar": [
+    {
+     "end": "2026-11-14T11:15",
+     "id": "evt-101",
+     "start": "2026-11-14T10:30",
+     "title": "Lattice sync"
+    },
+    {
+     "end": "2026-11-14T13:45",
+     "id": "evt-102",
+     "start": "2026-11-14T13:00",
+     "title": "Cobalt sync"
+    },
+    {
+     "end": "2026-11-14T16:15",
+     "id": "evt-103",
+     "start": "2026-11-14T15:30",
+     "title": "Bramble sync"
+    }
+   ]
+  }
+ },
+ "situation": "Book 'Meridian planning' on 2026-11-14 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30. Check the calendar first; never double-book a slot."
+}

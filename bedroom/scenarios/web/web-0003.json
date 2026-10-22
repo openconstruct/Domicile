@@ -1,0 +1,39 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "Harborlight-5G"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "mcp__mem2__mem2_search"
+  ]
+ },
+ "family": "web-noresults",
+ "id": "web-0003",
+ "max_turns": 4,
+ "notes": "Fallback routing, not abstention: the declared no_results_for substrings make any natural query about the SSID come back empty, and the graded road runs websearch -> mem2_search -> answer from the logs.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "chunks": [
+   {
+    "chunk_index": 0,
+    "date": "2026-09-18",
+    "source_file": "2026-09-18-chat.jsonl",
+    "text": "Set up the new router last night. The home Wi-Fi network name (SSID) is Harborlight-5G, and the old 2.4 GHz network is switched off."
+   }
+  ],
+  "facts": [
+   "the operator's home router was replaced in September"
+  ],
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "no_results_for": [
+    "ssid",
+    "wifi",
+    "wi-fi"
+   ]
+  }
+ },
+ "situation": "What is the operator's home Wi-Fi network name (SSID)? Check the web first; the web does not carry personal details like this, so if it has nothing, find the answer in the conversation logs."
+}

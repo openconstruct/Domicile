@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "8425"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-read-fact-008",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/anywhere-ops.txt": "Anywhere operations.\nThe admin port for Anywhere is 8675.\nNightly jobs run at 03:00.\n",
+   "/notes/selkie-ops.txt": "Selkie operations.\nThe admin port for Selkie is 8425.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the admin port for Selkie? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

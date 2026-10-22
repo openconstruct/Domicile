@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "6477"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-read-fact-001",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/aldergrove-ops.txt": "Aldergrove operations.\nThe metrics port for Aldergrove is 6727.\nNightly jobs run at 03:00.\n",
+   "/notes/ostara-ops.txt": "Ostara operations.\nThe metrics port for Ostara is 6477.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the metrics port for Ostara? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

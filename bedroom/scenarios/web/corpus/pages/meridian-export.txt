@@ -1,0 +1,7 @@
+Exporting from Meridian Notes.
+
+Meridian Notes exports a whole notebook from Settings > Export. Formats: markdown (one file per note, attachments in a media folder), HTML (a browsable static copy), or a single archive file for backups.
+
+Exports include tags and creation dates; internal links between notes are rewritten to file links in markdown and HTML exports. The archive format is a zip with a manifest, meant for re-import rather than reading.
+
+Scheduled exports are not supported; export by hand before big reorganisations.

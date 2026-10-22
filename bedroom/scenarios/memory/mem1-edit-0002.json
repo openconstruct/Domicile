@@ -1,0 +1,39 @@
+{
+  "id": "mem1-edit-0002",
+  "family": "mem1-edit",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/memory/goals.md": "Goals.\n"
+    }
+  },
+  "situation": "The operator dictates a goal, verbatim: 'Ship the beta, then the paper, then rest.' Write it into /memory/goals.md under the existing heading. This file's budget for this exercise is 12 tokens, so the whole file after your write must fit: keep the heading and compress the goal to fit the budget.",
+  "expected": {
+    "tool": "Write",
+    "args_match": {
+      "path": {
+        "equals": "/memory/goals.md"
+      },
+      "content": {
+        "contains": [
+          "beta",
+          "paper"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "file_contains",
+        "path": "/memory/goals.md",
+        "text": "beta"
+      },
+      {
+        "type": "file_max_tokens",
+        "path": "/memory/goals.md",
+        "max": 12
+      }
+    ]
+  },
+  "notes": "The cap binds: pasting the dictation verbatim blows the budget; consolidation is the skill being graded.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

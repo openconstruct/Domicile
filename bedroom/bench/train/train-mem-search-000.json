@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Grantham"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-000",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Jonas works in Dunmore",
+   "Jonas's sister lives in Dunmore",
+   "Jonas lives in Grantham",
+   "takes the 7:40 train"
+  ]
+ },
+ "situation": "Which city does Jonas live in? Search long-term memory, then answer."
+}

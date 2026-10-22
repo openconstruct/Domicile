@@ -1,0 +1,28 @@
+{
+ "archetype": "blogger-note",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "Northloop 3.7 is out: it adds delta sync for large files and cuts sync time in half.",
+    "type": "blog_posted"
+   }
+  ],
+  "required_sequence": [
+   "Read",
+   "blogger_post"
+  ]
+ },
+ "family": "social",
+ "id": "train-blogger-note-040",
+ "max_turns": 6,
+ "notes": "The key line must be lifted from the note, not improvised; announcing in chat earns 0.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release-note.txt": "Release note draft -- Northloop 3.7\nNorthloop 3.7 is out: it adds delta sync for large files and cuts sync time in half.\nThanks to everyone who tested.\n"
+  }
+ },
+ "situation": "Publish the Northloop 3.7 release summary from /notes/release-note.txt to the blog. The post body must include the summary line from the note."
+}

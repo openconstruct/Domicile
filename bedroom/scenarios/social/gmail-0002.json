@@ -1,0 +1,54 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "smoke tests",
+    "type": "draft_exists"
+   },
+   {
+    "body_contains": "rollback note",
+    "type": "draft_exists"
+   },
+   {
+    "body_contains": "rollback note",
+    "type": "mail_not_sent"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "gmail_draft"
+  ]
+ },
+ "family": "gmail",
+ "id": "gmail-0002",
+ "max_turns": 4,
+ "notes": "Draft-vs-send discrimination is the whole scenario. gmail_send is the bait tool: the draft text exists in the inbox, so a student can produce the right words immediately -- but sending them fails mail_not_sent no matter how good the wording is, and only gmail_draft satisfies draft_exists. Sequence + both postcondition kinds must hold together.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "inbox": [
+    {
+     "body": "When you get a moment, could you write the deploy-checklist reply for the team thread? The three checks are smoke tests, a fresh snapshot, and the rollback note. The operator wants to review the wording before anything goes out.",
+     "from": "Dana Okafor <dana@fernway.example>",
+     "id": "msg-201",
+     "subject": "Fernway deploy checklist reply"
+    },
+    {
+     "body": "Weekly status: no incidents, deploys on schedule.",
+     "from": "Northloop Status <status@northloop.example>",
+     "id": "msg-202",
+     "subject": "All systems normal"
+    },
+    {
+     "body": "Got the retention number, thanks -- runbook is updated on our side.",
+     "from": "Priya Nair <priya@northloop.example>",
+     "id": "msg-203",
+     "subject": "Runbook thanks"
+    }
+   ]
+  }
+ },
+ "situation": "Dana from Fernway asked for a reply covering the Fernway deploy checklist. Prepare it as a mail DRAFT for the operator's review -- do not send anything. The draft must cover the three checks: smoke tests, a fresh snapshot, and the rollback note."
+}

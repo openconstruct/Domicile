@@ -1,0 +1,33 @@
+{
+  "id": "mem0-delete-0003",
+  "family": "mem0-delete",
+  "difficulty": 1,
+  "setup": {
+    "facts": [
+      "the operator's cat is named Biscuit",
+      "the operator's old address is 44 Elm Street"
+    ],
+    "show_listing": true
+  },
+  "situation": "The operator asks you to forget their old address (44 Elm Street). Delete that memory.",
+  "expected": {
+    "tool": "mcp__memory__memory_delete",
+    "args_match": {
+      "memory_id": {
+        "equals": "m-002"
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_not_contains",
+        "text": "Elm Street"
+      },
+      {
+        "type": "store_contains",
+        "text": "Biscuit"
+      }
+    ]
+  },
+  "notes": "Targeted forget; the unrelated fact must survive.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

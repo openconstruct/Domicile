@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-add",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "text": "Sana reviews Larsen deploys every Thursday",
+    "type": "store_contains"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-add-004",
+ "max_turns": 6,
+ "notes": "The fact must land in the store verbatim enough to match; narrating it earns 0.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "prefers tea in the morning"
+  ]
+ },
+ "situation": "Remember this for later: Sana reviews Larsen deploys every Thursday. Store it in long-term memory."
+}

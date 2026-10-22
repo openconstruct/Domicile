@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "45 days",
+    "subject_contains": "Fernway",
+    "to_contains": "ines@example.com",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-036",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fernway-ops.txt": "Fernway ops notes.\nThe shipped default retention window for Fernway snapshots is 45 days when retention_days is not set.\n",
+   "/notes/sextant-ops.txt": "Sextant ops notes.\nThe shipped default retention window for Sextant snapshots is 52 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Fernway snapshots. What is it, in days?",
+     "from": "ines@example.com",
+     "id": "msg-101",
+     "subject": "Fernway retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Sextant -- the shipped default retention window, in days? (Answer on the Sextant thread, not this one.)",
+     "from": "ines@example.com",
+     "id": "msg-102",
+     "subject": "Sextant retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Ines emailed asking for the shipped default retention window for Fernway snapshots for the runbook. Find the email, check the ops notes, and reply to Ines with the window. Reply only to that email."
+}

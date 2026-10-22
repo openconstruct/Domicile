@@ -1,0 +1,46 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "November 9"
+  ],
+  "required_sequence": [
+   "discord_read"
+  ]
+ },
+ "family": "discord",
+ "id": "discord-0002",
+ "max_turns": 3,
+ "notes": "mem0 holds the stale October 30 date -- the original proposal, which the channel history explicitly supersedes ('October 30 is off the table') before Dana's final decision. Answering from memory gives the wrong date and also fails the required sequence; the graded string 'November 9' appears only in the final ops message, so only reading the channel can produce it.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "the team decided the deploy freeze lifts on October 30"
+  ],
+  "social": {
+   "discord": {
+    "general": [
+     {
+      "author": "Tomas",
+      "text": "Anyone else seeing slow snapshot pruning today?"
+     }
+    ],
+    "ops": [
+     {
+      "author": "Priya",
+      "text": "Freeze planning: my proposal is the freeze starts Nov 2 and lifts October 30 if the exporter lands early."
+     },
+     {
+      "author": "Marcus",
+      "text": "Exporter is not landing early, sadly. October 30 is off the table."
+     },
+     {
+      "author": "Dana",
+      "text": "Final decision: deploy freeze starts Monday November 2 and lifts on November 9. No exceptions without my sign-off."
+     }
+    ]
+   }
+  }
+ },
+ "situation": "What did the team decide about the deploy freeze? Check the ops channel history and tell me the decision."
+}

@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "7"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-grep-count-001",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/dunmore.log": "2026-10-01 INFO checkpoint saved\n2026-10-08 DEPLOY dunmore job finished rc=0\n2026-10-08 INFO queue drained\n2026-10-02 DEPLOY dunmore job finished rc=0\n2026-10-17 DEPLOY dunmore job finished rc=0\n2026-10-22 DEPLOY dunmore job finished rc=0\n2026-10-16 WARN disk at 61 percent\n2026-10-25 INFO heartbeat ok\n2026-10-17 INFO heartbeat ok\n2026-10-13 DEPLOY dunmore job finished rc=0\n2026-10-06 DEPLOY dunmore job finished rc=0\n2026-10-18 INFO checkpoint saved\n2026-10-14 DEPLOY dunmore job finished rc=0\n"
+  }
+ },
+ "situation": "How many lines in /logs/dunmore.log contain the word DEPLOY? Use search, then answer with just the number."
+}

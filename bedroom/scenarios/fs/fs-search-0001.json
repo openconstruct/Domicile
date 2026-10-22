@@ -1,0 +1,26 @@
+{
+  "id": "fs-search-0001",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/notes/a.txt": "nothing here",
+      "/notes/b.txt": "the launch code is ORCHID",
+      "/notes/c.txt": "lunch plans"
+    }
+  },
+  "situation": "Find which file in /notes contains the launch code. Search the files for ORCHID.",
+  "expected": {
+    "tool": "Grep",
+    "args_match": {
+      "pattern": {
+        "equals": "ORCHID"
+      },
+      "output_mode": {
+        "equals": "files_with_matches"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Search beats reading files one by one / guessing."
+}

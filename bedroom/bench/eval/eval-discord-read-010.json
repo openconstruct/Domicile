@@ -1,0 +1,43 @@
+{
+ "archetype": "discord-read",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "October 30"
+  ],
+  "required_sequence": [
+   "discord_read"
+  ]
+ },
+ "family": "social",
+ "id": "eval-discord-read-010",
+ "max_turns": 6,
+ "notes": "The decision sits mid-chatter; answering from memory or the first message fails.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "ops": [
+     {
+      "author": "kim",
+      "text": "any update on the Antonia freeze?"
+     },
+     {
+      "author": "lee",
+      "text": "still deciding between two dates"
+     },
+     {
+      "author": "ops-lead",
+      "text": "Decision: the Antonia deploy freeze starts October 30 and lifts on December 1."
+     },
+     {
+      "author": "kim",
+      "text": "thanks, marking the calendar"
+     }
+    ]
+   }
+  }
+ },
+ "situation": "What did the team decide about the Antonia deploy freeze in #ops? Read the channel and answer with the start date."
+}

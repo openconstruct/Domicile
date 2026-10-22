@@ -1,0 +1,26 @@
+{
+ "archetype": "fs-write-note",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/bramble-access.txt",
+    "text": "Access code for the Bramble lab, issued to Lena: 485-227\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Write"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-write-note-046",
+ "max_turns": 6,
+ "notes": "Verbatim write; the graded content is exact, punctuation included.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {}
+ },
+ "situation": "Write a new file at /notes/bramble-access.txt containing exactly this line and nothing else: 'Access code for the Bramble lab, issued to Lena: 485-227' followed by a newline."
+}

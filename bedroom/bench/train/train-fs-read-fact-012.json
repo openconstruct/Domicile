@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "7674"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-read-fact-012",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/northloop-ops.txt": "Northloop operations.\nThe metrics port for Northloop is 7674.\nNightly jobs run at 02:00.\n",
+   "/notes/sextant-ops.txt": "Sextant operations.\nThe metrics port for Sextant is 7924.\nNightly jobs run at 03:00.\n"
+  }
+ },
+ "situation": "What is the metrics port for Northloop? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "5024"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-read-fact-063",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/meridian-ops.txt": "Meridian operations.\nThe deploy port for Meridian is 5041.\nNightly jobs run at 03:00.\n",
+   "/notes/sextant-ops.txt": "Sextant operations.\nThe deploy port for Sextant is 5024.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the deploy port for Sextant? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Grantham"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-search-007",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Inna's sister lives in Falkirk",
+   "Inna works in Falkirk",
+   "Inna lives in Grantham",
+   "keeps the server room key in the blue drawer"
+  ]
+ },
+ "situation": "Which city does Inna live in? Search long-term memory, then answer."
+}

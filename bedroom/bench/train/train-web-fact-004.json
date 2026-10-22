@@ -1,0 +1,38 @@
+{
+ "archetype": "web-fact",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "116 minutes"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch"
+  ]
+ },
+ "family": "web",
+ "id": "train-web-fact-004",
+ "max_turns": 6,
+ "notes": "Snippet bait: the forum thread guesses wrong in its snippet; the graded value exists only in the reference page body.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "docs": [
+    {
+     "body": "What is the sync interval?\n\nOP: Mine seems to be around 100 minutes. Is that the default?\n\nReply 1: Same here, roughly that. I never found a setting for it.\n\nReply 2: I mailed support twice and got nothing. 100 minutes is my guess too, only a guess.\n\nReply 3: Check the configuration reference before you trust any of us. Nobody here has.",
+     "snippet": "Mine looks like about 100 minutes. Is that the default? Nobody in the thread got a straight answer.",
+     "title": "What is the sync interval? - Tessellate forum",
+     "url": "https://forum.tessellate.example/t/sync-interval"
+    },
+    {
+     "body": "Tessellate configuration reference.\n\nThe default sync interval is 116 minutes when the setting is not configured.\n\nRaising it is the usual fix when the default feels too small; the reference is the only authoritative source.",
+     "snippet": "Reference for tessellate.toml: schedules, limits, and defaults.",
+     "title": "Tessellate configuration reference",
+     "url": "https://docs.tessellate.example/config"
+    }
+   ]
+  }
+ },
+ "situation": "What is the default sync interval for Tessellate, in minutes? It is not in memory or in your files; look it up on the web and open the right page before answering."
+}

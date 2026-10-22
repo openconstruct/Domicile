@@ -1,0 +1,22 @@
+{
+  "id": "fs-read-0002",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/a/report.txt": "DRAFT",
+      "/b/report.txt": "FINAL revenue 42"
+    }
+  },
+  "situation": "Get the contents of the final report in /b/report.txt, not the draft.",
+  "expected": {
+    "tool": "Read",
+    "args_match": {
+      "path": {
+        "equals": "/b/report.txt"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Distractor: same filename in /a."
+}

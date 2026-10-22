@@ -1,0 +1,38 @@
+{
+ "archetype": "web-fact",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "750 minutes"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch"
+  ]
+ },
+ "family": "web",
+ "id": "train-web-fact-034",
+ "max_turns": 6,
+ "notes": "Snippet bait: the forum thread guesses wrong in its snippet; the graded value exists only in the reference page body.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "docs": [
+    {
+     "body": "What is the sync interval?\n\nOP: Mine seems to be around 250 minutes. Is that the default?\n\nReply 1: Same here, roughly that. I never found a setting for it.\n\nReply 2: I mailed support twice and got nothing. 250 minutes is my guess too, only a guess.\n\nReply 3: Check the configuration reference before you trust any of us. Nobody here has.",
+     "snippet": "Mine looks like about 250 minutes. Is that the default? Nobody in the thread got a straight answer.",
+     "title": "What is the sync interval? - Northloop forum",
+     "url": "https://forum.northloop.example/t/sync-interval"
+    },
+    {
+     "body": "Northloop configuration reference.\n\nThe default sync interval is 750 minutes when the setting is not configured.\n\nRaising it is the usual fix when the default feels too small; the reference is the only authoritative source.",
+     "snippet": "Reference for northloop.toml: schedules, limits, and defaults.",
+     "title": "Northloop configuration reference",
+     "url": "https://docs.northloop.example/config"
+    }
+   ]
+  }
+ },
+ "situation": "What is the default sync interval for Northloop, in minutes? It is not in memory or in your files; look it up on the web and open the right page before answering."
+}

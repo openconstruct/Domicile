@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/fernway-status.txt",
+    "text": "Fernway release status\ncurrent version: 7.5\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-edit-unique-035",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fernway-status.txt": "Fernway release status\ncurrent version: 7.7\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/fernway-status.txt, change the current version from 7.7 to 7.5. Change nothing else in the file."
+}

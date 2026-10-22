@@ -1,0 +1,19 @@
+# cchat main interpreter.
+# Install into a venv:  python3 -m venv ~/.cchat-venv && ~/.cchat-venv/bin/pip install -r requirements.txt
+#
+# Versions are intentionally unpinned — pin them once the box is known good.
+
+textual>=0.60
+claude-agent-sdk        # also needs the Claude Code CLI installed + authenticated
+aiohttp                 # HTTP API (api_server.py) — optional, cchat runs without it
+discord.py              # Discord bridge — optional, cchat runs without it
+mcp                     # MCP stdio client for the memory servers
+ddgs                    # WebSearch tool (local_tools.web_search) — optional
+openai                  # OpenAI-compatible provider path (OpenRouter / NIM)
+
+python-dotenv           # shared .env credential loader
+
+# Google connector (Gmail / Calendar / Blogger / Chat) — optional
+google-auth
+google-auth-oauthlib
+google-api-python-client

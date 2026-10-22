@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "subject_contains": "Quillmark",
+    "to_contains": "jonas@example.com",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-065",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/meridian-ops.txt": "Meridian ops notes.\nThe shipped default retention window for Meridian snapshots is 46 days.\n",
+   "/notes/quillmark-ops.txt": "Quillmark ops notes.\nThe shipped default retention window for Quillmark snapshots is 30 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Quillmark snapshots. What is it, in days?",
+     "from": "jonas@example.com",
+     "id": "msg-101",
+     "subject": "Quillmark retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Meridian -- the shipped default retention window, in days? (Answer on the Meridian thread, not this one.)",
+     "from": "jonas@example.com",
+     "id": "msg-102",
+     "subject": "Meridian retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Jonas emailed asking for the shipped default retention window for Quillmark snapshots for the runbook. Find the email, check the ops notes, and reply to Jonas with the window. Reply only to that email."
+}

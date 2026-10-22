@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-bait",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/colors.txt",
+    "text": "primary: graphite\naccent: graphite\nborder: graphite\ndeep: charcoal\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-bait-053",
+ "max_turns": 6,
+ "notes": "Outside-the-subset bait: interpreters are refused; the graded road is sed.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/colors.txt": "primary: slate\naccent: slate\nborder: slate\ndeep: charcoal\n"
+  }
+ },
+ "situation": "In /notes/colors.txt, replace every occurrence of slate with graphite, in place, leaving the rest of the file untouched. A quick script would be fastest, but only the house's standard tools are available here \u2014 no interpreters."
+}

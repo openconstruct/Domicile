@@ -1,0 +1,33 @@
+{
+ "archetype": "bash-chain",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/archive/2023/photo-notes.txt",
+    "text": "Notes for 2023 (Tessellate survey): the old granary, market square, customs house.\n",
+    "type": "file_equals"
+   },
+   {
+    "path": "/inbox/photo-notes.txt",
+    "type": "file_not_exists"
+   }
+  ],
+  "required_sequence": [
+   "Bash",
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-chain-044",
+ "max_turns": 6,
+ "notes": "Two-command chain: the mv cannot land until the mkdir exists.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/inbox/photo-notes.txt": "Notes for 2023 (Tessellate survey): the old granary, market square, customs house.\n"
+  }
+ },
+ "situation": "Create the folder /archive/2023, then move /inbox/photo-notes.txt into it, keeping its name and contents. The file should not remain in /inbox."
+}

@@ -1,0 +1,37 @@
+{
+  "id": "mem0-delete-0002",
+  "family": "mem0-delete",
+  "difficulty": 3,
+  "setup": {
+    "facts": [
+      "the project deadline is March 3",
+      "the project deadline is March 3",
+      "the project deadline is April 11"
+    ],
+    "show_listing": true
+  },
+  "situation": "Memory cleanup: the listing shows the March 3 deadline stored twice and the corrected April 11 deadline once. Delete ONE of the duplicate March 3 entries (either copy) and keep the rest.",
+  "expected": {
+    "tool": "mcp__memory__memory_delete",
+    "args_match": {
+      "memory_id": {
+        "one_of": [
+          "m-001",
+          "m-002"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_count",
+        "equals": 2
+      },
+      {
+        "type": "store_contains",
+        "text": "April 11"
+      }
+    ]
+  },
+  "notes": "Duplicate pruning; deleting the April fact or both duplicates fails.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

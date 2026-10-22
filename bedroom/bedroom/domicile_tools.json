@@ -1,0 +1,248 @@
+[
+ {
+  "function": {
+   "description": "Read a file. Returns numbered lines. PDFs are handled specially: text-layer extraction via pypdf, with an OCR fallback (tesseract) for scanned/image-only PDFs.",
+   "name": "Read",
+   "parameters": {
+    "properties": {
+     "limit": {
+      "description": "Max lines",
+      "type": "integer"
+     },
+     "offset": {
+      "description": "First line (1-based)",
+      "type": "integer"
+     },
+     "path": {
+      "description": "Absolute path",
+      "type": "string"
+     }
+    },
+    "required": [
+     "path"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Write a file. Must Read an existing file first.",
+   "name": "Write",
+   "parameters": {
+    "properties": {
+     "content": {
+      "type": "string"
+     },
+     "path": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "path",
+     "content"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Replace an exact string in a file. Must be unique unless replace_all is set.",
+   "name": "Edit",
+   "parameters": {
+    "properties": {
+     "new": {
+      "type": "string"
+     },
+     "old": {
+      "description": "Exact text to replace",
+      "type": "string"
+     },
+     "path": {
+      "type": "string"
+     },
+     "replace_all": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "path",
+     "old",
+     "new"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Find files by glob pattern, newest first.",
+   "name": "Glob",
+   "parameters": {
+    "properties": {
+     "path": {
+      "description": "Directory to search",
+      "type": "string"
+     },
+     "pattern": {
+      "description": "e.g. **/*.py",
+      "type": "string"
+     }
+    },
+    "required": [
+     "pattern"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Search file contents with ripgrep regex.",
+   "name": "Grep",
+   "parameters": {
+    "properties": {
+     "after": {
+      "description": "Lines of context after each match",
+      "type": "integer"
+     },
+     "before": {
+      "description": "Lines of context before each match",
+      "type": "integer"
+     },
+     "context": {
+      "description": "Lines of context around each match",
+      "type": "integer"
+     },
+     "glob": {
+      "description": "Filter, e.g. *.py",
+      "type": "string"
+     },
+     "head_limit": {
+      "description": "Max lines returned (default 250)",
+      "type": "integer"
+     },
+     "ignore_case": {
+      "description": "Case insensitive",
+      "type": "boolean"
+     },
+     "line_numbers": {
+      "description": "Show line numbers (content mode, default true)",
+      "type": "boolean"
+     },
+     "multiline": {
+      "description": "Let patterns span lines",
+      "type": "boolean"
+     },
+     "offset": {
+      "description": "Skip this many result lines first",
+      "type": "integer"
+     },
+     "output_mode": {
+      "description": "Default content (matching lines)",
+      "enum": [
+       "content",
+       "files_with_matches",
+       "count"
+      ],
+      "type": "string"
+     },
+     "path": {
+      "type": "string"
+     },
+     "pattern": {
+      "type": "string"
+     },
+     "type": {
+      "description": "ripgrep file type, e.g. py, js",
+      "type": "string"
+     }
+    },
+    "required": [
+     "pattern"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Run a program. Takes an argv LIST, not a shell string: there is no shell, so pipes, redirects, globs and && do not work. Chain steps with separate calls.",
+   "name": "Bash",
+   "parameters": {
+    "properties": {
+     "argv": {
+      "description": "e.g. [\"ls\",\"-la\",\"/tmp\"]",
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "cwd": {
+      "type": "string"
+     },
+     "timeout_s": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "argv"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Search the web. Returns titles, URLs and snippets.",
+   "name": "WebSearch",
+   "parameters": {
+    "properties": {
+     "count": {
+      "description": "Max results (default 5, max 10)",
+      "type": "integer"
+     },
+     "query": {
+      "description": "Search query",
+      "type": "string"
+     }
+    },
+    "required": [
+     "query"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Fetch a URL and return cleaned text.",
+   "name": "WebFetch",
+   "parameters": {
+    "properties": {
+     "max_chars": {
+      "description": "Max chars to return (default 12000)",
+      "type": "integer"
+     },
+     "url": {
+      "description": "URL to fetch",
+      "type": "string"
+     }
+    },
+    "required": [
+     "url"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ }
+]

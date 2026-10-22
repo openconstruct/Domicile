@@ -1,0 +1,28 @@
+{
+ "archetype": "blogger-note",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "Meridian 4.1 is out: it adds offline mode for field crews and halves storage use.",
+    "type": "blog_posted"
+   }
+  ],
+  "required_sequence": [
+   "Read",
+   "blogger_post"
+  ]
+ },
+ "family": "social",
+ "id": "train-blogger-note-048",
+ "max_turns": 6,
+ "notes": "The key line must be lifted from the note, not improvised; announcing in chat earns 0.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release-note.txt": "Release note draft -- Meridian 4.1\nMeridian 4.1 is out: it adds offline mode for field crews and halves storage use.\nThanks to everyone who tested.\n"
+  }
+ },
+ "situation": "Publish the Meridian 4.1 release summary from /notes/release-note.txt to the blog. The post body must include the summary line from the note."
+}

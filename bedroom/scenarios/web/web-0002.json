@@ -1,0 +1,46 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "upstream_ttl"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch"
+  ]
+ },
+ "family": "web-fetch-right",
+ "id": "web-0002",
+ "max_turns": 4,
+ "notes": "Three near-identical guides, three different key names across versions. Only the Sextant 3 page holds the graded key; fetching v1 or v2 (or answering from their snippets) yields a wrong key.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "the operator runs a Sextant 3 proxy at home"
+  ],
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "Sextant 1 configuration guide.\n\ncache_ttl: seconds a cached upstream response is kept before Sextant 1 asks again. Default 300.\nworkers: number of listener workers.\nlisten: address and port to bind.\n\nSextant 1 has no separate upstream section; every cache setting is global.",
+     "snippet": "Sextant 1 configuration: the cache_ttl key, worker count, and listen address.",
+     "title": "Sextant 1 configuration guide",
+     "url": "https://docs.sextant.example/v1/config"
+    },
+    {
+     "body": "Sextant 2 configuration guide.\n\nttl_seconds: seconds a cached upstream response is kept. Default 600. (This key replaced cache_ttl from Sextant 1.)\nworkers: number of listener workers.\nlisten: address and port to bind.\nlog_level: one of quiet, normal, debug.\n\nSextant 2 reads Sextant 1 files but warns about the renamed key.",
+     "snippet": "Sextant 2 configuration: ttl_seconds, worker count, listen address, and logging.",
+     "title": "Sextant 2 configuration guide",
+     "url": "https://docs.sextant.example/v2/config"
+    },
+    {
+     "body": "Sextant 3 configuration guide.\n\nupstream_ttl: seconds a cached upstream response is kept before Sextant 3 revalidates it. Default 900.\n\nThe upstream cache TTL moved under this key in Sextant 3; the older ttl_seconds key is ignored, and files still using it fall back to the default.\nworkers: number of listener workers.\nlisten: address and port to bind.\nlog_level: one of quiet, normal, debug.",
+     "snippet": "Sextant 3 configuration: upstream cache settings, worker count, listen address, and logging.",
+     "title": "Sextant 3 configuration guide",
+     "url": "https://docs.sextant.example/v3/config"
+    }
+   ]
+  }
+ },
+ "situation": "In Sextant 3, which config key sets the upstream cache TTL? The web has configuration guides for Sextant 1, 2, and 3; open the right one and answer with the key name."
+}

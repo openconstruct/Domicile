@@ -1,0 +1,41 @@
+{
+ "archetype": "mail-draft",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "ping the on-call",
+    "to_contains": "felix@example.com",
+    "type": "draft_exists"
+   },
+   {
+    "to_contains": "felix@example.com",
+    "type": "mail_not_sent"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "gmail_draft"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-draft-009",
+ "max_turns": 6,
+ "notes": "Draft-don't-send discrimination, the M4 failure class: sending the same content fails mail_not_sent.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "inbox": [
+    {
+     "body": "Could you draft the deploy checklist reply for me? The steps are: 1) run the smoke tests, 2) ping the on-call, 3) take a fresh snapshot. Save it as a draft for my review -- do not send it.",
+     "from": "felix@example.com",
+     "id": "msg-201",
+     "subject": "Tessellate deploy checklist"
+    }
+   ]
+  }
+ },
+ "situation": "Felix emailed a deploy checklist for Tessellate and wants the reply saved as a draft for review, not sent. Find the email and draft the reply with the three steps."
+}

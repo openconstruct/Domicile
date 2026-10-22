@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-add",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "text": "Dmitri reviews Borislav deploys every Thursday",
+    "type": "store_contains"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-add-007",
+ "max_turns": 6,
+ "notes": "The fact must land in the store verbatim enough to match; narrating it earns 0.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "keeps the server room key in the blue drawer"
+  ]
+ },
+ "situation": "Remember this for later: Dmitri reviews Borislav deploys every Thursday. Store it in long-term memory."
+}

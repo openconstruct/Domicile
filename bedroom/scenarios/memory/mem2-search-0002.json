@@ -1,0 +1,50 @@
+{
+  "id": "mem2-search-0002",
+  "family": "mem2-search",
+  "difficulty": 2,
+  "setup": {
+    "chunks": [
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 0,
+        "date": "2026-09-02",
+        "text": "discussed the garden fence repair and the quote from the contractor"
+      },
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 1,
+        "date": "2026-09-02",
+        "text": "the contractor quote for the fence was 2400, permits discussed"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 0,
+        "date": "2026-10-01",
+        "text": "planned the winter greenhouse build, ordered glass panels"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 1,
+        "date": "2026-10-01",
+        "text": "greenhouse heating options compared, settled on the small electric unit"
+      }
+    ]
+  },
+  "situation": "Look in past conversations from October 2026 onward for the greenhouse heating decision.",
+  "expected": {
+    "tool": "mcp__mem2__mem2_search",
+    "args_match": {
+      "query": {
+        "contains": [
+          "greenhouse",
+          "heating"
+        ]
+      },
+      "date_from": {
+        "equals": "2026-10-01"
+      }
+    }
+  },
+  "notes": "Date-bounded search; September chunks are distractors.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

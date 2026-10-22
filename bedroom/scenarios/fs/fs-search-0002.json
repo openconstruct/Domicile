@@ -1,0 +1,26 @@
+{
+  "id": "fs-search-0002",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/logs/1.txt": "ok",
+      "/logs/2.txt": "ERROR disk full",
+      "/logs/3.txt": "ok"
+    }
+  },
+  "situation": "Search /logs for the string ERROR to find the failing log.",
+  "expected": {
+    "tool": "Grep",
+    "args_match": {
+      "pattern": {
+        "equals": "ERROR"
+      },
+      "output_mode": {
+        "equals": "files_with_matches"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Buried needle across three files."
+}

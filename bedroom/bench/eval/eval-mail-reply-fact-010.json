@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "subject_contains": "Larsen",
+    "to_contains": "boris@post.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "eval-mail-reply-fact-010",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/innate-ops.txt": "Innate ops notes.\nThe shipped default retention window for Innate snapshots is 46 days.\n",
+   "/notes/larsen-ops.txt": "Larsen ops notes.\nThe shipped default retention window for Larsen snapshots is 30 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Larsen snapshots. What is it, in days?",
+     "from": "boris@post.bench.test",
+     "id": "msg-101",
+     "subject": "Larsen retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Innate -- the shipped default retention window, in days? (Answer on the Innate thread, not this one.)",
+     "from": "boris@post.bench.test",
+     "id": "msg-102",
+     "subject": "Innate retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Boris emailed asking for the shipped default retention window for Larsen snapshots for the runbook. Find the email, check the ops notes, and reply to Boris with the window. Reply only to that email."
+}

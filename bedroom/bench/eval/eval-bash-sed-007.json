@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-sed",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/release.txt",
+    "text": "Innate release checklist\n- build: FINAL\n- smoke tests: FINAL\n- changelog: done\n- announcement: FINAL\nShip only when nothing is draft.\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "eval-bash-sed-007",
+ "max_turns": 6,
+ "notes": "sed in place vs the overwrite bait; the lowercase form in the last line must survive.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release.txt": "Innate release checklist\n- build: DRAFT\n- smoke tests: DRAFT\n- changelog: done\n- announcement: DRAFT\nShip only when nothing is draft.\n"
+  }
+ },
+ "situation": "In /notes/release.txt, change every DRAFT to FINAL, in place. Leave everything else in the file exactly as it is."
+}

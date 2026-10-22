@@ -1,0 +1,30 @@
+{
+  "id": "mem0-add-0002",
+  "family": "mem0-add",
+  "difficulty": 2,
+  "setup": {
+    "facts": [
+      "the operator is building a desktop suite"
+    ]
+  },
+  "situation": "The operator says: 'Decision made \u2014 the desktop suite ships as .deb packages first, Flatpak later if ever.' Store the decision in long-term memory.",
+  "expected": {
+    "tool": "mcp__memory__memory_add",
+    "args_match": {
+      "text": {
+        "contains": [
+          ".deb",
+          "Flatpak"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_contains",
+        "text": ".deb"
+      }
+    ]
+  },
+  "notes": "Decision + reason shape; both halves of the decision should land in the stored text.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

@@ -1,0 +1,37 @@
+{
+ "archetype": "discord-post",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "channel": "standup",
+    "text_contains": "Dunmore 2.4 freeze starts tonight at 23:00 UTC",
+    "type": "discord_posted"
+   },
+   {
+    "channel": "random",
+    "text_contains": "Dunmore 2.4 freeze starts tonight at 23:00 UTC",
+    "type": "discord_not_posted"
+   }
+  ],
+  "required_sequence": [
+   "discord_post"
+  ]
+ },
+ "family": "social",
+ "id": "dev-discord-post-002",
+ "max_turns": 6,
+ "notes": "Similar-name channel bait; the graded text must land in exactly the named channel.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "general": [],
+    "random": [],
+    "standup": []
+   }
+  }
+ },
+ "situation": "Post this update to #standup: 'Dunmore 2.4 freeze starts tonight at 23:00 UTC'. Post it exactly once, to that channel only."
+}

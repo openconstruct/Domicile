@@ -1,0 +1,25 @@
+{
+  "id": "fs-search-0003",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/kb/a.md": "apples",
+      "/kb/b.md": "zebras"
+    }
+  },
+  "situation": "Search /kb for 'zebras'.",
+  "expected": {
+    "tool": "Grep",
+    "args_match": {
+      "pattern": {
+        "equals": "zebras"
+      },
+      "output_mode": {
+        "equals": "files_with_matches"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Second search surface."
+}

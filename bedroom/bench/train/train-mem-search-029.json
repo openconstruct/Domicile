@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Eastvale"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-029",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Lena lives in Eastvale",
+   "takes the 7:40 train",
+   "Lena's sister lives in Bexley",
+   "Lena works in Bexley"
+  ]
+ },
+ "situation": "Which city does Lena live in? Search long-term memory, then answer."
+}

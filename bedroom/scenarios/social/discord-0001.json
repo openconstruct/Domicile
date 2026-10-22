@@ -1,0 +1,45 @@
+{
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "channel": "standup",
+    "text_contains": "snapshot pruner still blocked on review",
+    "type": "discord_posted"
+   }
+  ],
+  "required_sequence": [
+   "discord_post"
+  ]
+ },
+ "family": "discord",
+ "id": "discord-0001",
+ "max_turns": 3,
+ "notes": "Channel discrimination at difficulty 1: the summary text is given verbatim, so the only graded judgment is the surface -- #general and #random are seeded decoys, and posting the perfect text to either fails the channel-keyed postcondition.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "general": [
+     {
+      "author": "Priya",
+      "text": "Has anyone seen the new Fernway build?"
+     }
+    ],
+    "random": [
+     {
+      "author": "Tomas",
+      "text": "coffee machine is fixed, finally"
+     }
+    ],
+    "standup": [
+     {
+      "author": "Marcus",
+      "text": "Yesterday: shipped the exporter fix. Today: migration review."
+     }
+    ]
+   }
+  }
+ },
+ "situation": "Post this morning's standup summary to the standup channel: 'Standup: API migration merged; snapshot pruner still blocked on review.'"
+}

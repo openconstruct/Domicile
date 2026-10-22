@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "subject_contains": "Marengo",
+    "to_contains": "anton@office.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "eval-mail-reply-fact-001",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/innate-ops.txt": "Innate ops notes.\nThe shipped default retention window for Innate snapshots is 23 days.\n",
+   "/notes/marengo-ops.txt": "Marengo ops notes.\nThe shipped default retention window for Marengo snapshots is 14 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Marengo snapshots. What is it, in days?",
+     "from": "anton@office.bench.test",
+     "id": "msg-101",
+     "subject": "Marengo retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Innate -- the shipped default retention window, in days? (Answer on the Innate thread, not this one.)",
+     "from": "anton@office.bench.test",
+     "id": "msg-102",
+     "subject": "Innate retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Anton emailed asking for the shipped default retention window for Marengo snapshots for the runbook. Find the email, check the ops notes, and reply to Anton with the window. Reply only to that email."
+}

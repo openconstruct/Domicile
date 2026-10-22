@@ -1,0 +1,33 @@
+{
+ "archetype": "fs-glob-list",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/report-12.log",
+   "/data/report-17.log",
+   "/data/report-21.log"
+  ],
+  "required_sequence": [
+   "Glob"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-glob-list-058",
+ "max_turns": 6,
+ "notes": "Glob pattern discipline; .bak siblings and other extensions are bait.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/draft-15.txt": "contents of draft-15.txt\n",
+   "/data/draft-26.txt": "contents of draft-26.txt\n",
+   "/data/draft-5.txt": "contents of draft-5.txt\n",
+   "/data/notes-15.log.bak": "contents of notes-15.log.bak\n",
+   "/data/notes-16.log.bak": "contents of notes-16.log.bak\n",
+   "/data/report-12.log": "contents of report-12.log\n",
+   "/data/report-17.log": "contents of report-17.log\n",
+   "/data/report-21.log": "contents of report-21.log\n"
+  }
+ },
+ "situation": "List every file in /data whose name ends in .log \u2014 full paths, one per line, nothing else in your answer."
+}

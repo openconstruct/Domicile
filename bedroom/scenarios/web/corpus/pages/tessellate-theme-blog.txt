@@ -1,0 +1,5 @@
+Five Tessellate themes, compared.
+
+I rebuilt the same blog with five popular Tessellate themes and timed everything. Almanac is the minimalist favourite: one column, no JavaScript, builds in a blink. Fieldnotes suits documentation, with a sidebar and search. Cartographer is the portfolio theme, all big images and grids.
+
+The surprise winner for a personal blog was Almanac: its configuration is four lines long and it never once broke on a theme update. Fieldnotes is what I would pick for a project wiki.

@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/granton-status.txt",
+    "text": "Granton release status\ncurrent version: 5.1\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-edit-unique-000",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/granton-status.txt": "Granton release status\ncurrent version: 6.0\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/granton-status.txt, change the current version from 6.0 to 5.1. Change nothing else in the file."
+}

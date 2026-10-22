@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "6967"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-read-fact-000",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/dmitra-ops.txt": "Dmitra operations.\nThe metrics port for Dmitra is 6984.\nNightly jobs run at 03:00.\n",
+   "/notes/innate-ops.txt": "Innate operations.\nThe metrics port for Innate is 6967.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the metrics port for Innate? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

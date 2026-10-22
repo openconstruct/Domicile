@@ -1,0 +1,5 @@
+Tessellate theme reference.
+
+A theme is a directory of templates, partials, and static assets. Templates are rendered with the page's front matter plus the site configuration. Partials are shared fragments: headers, footers, menus.
+
+Theme settings live in the theme's own theme.toml and can be overridden per site. The asset pipeline fingerprints CSS and JavaScript so browsers never serve stale files. A theme may declare a minimum Tessellate version; builds refuse older engines rather than failing halfway.

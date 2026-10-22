@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/vessel-status.txt",
+    "text": "Vessel release status\ncurrent version: 1.5\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-edit-unique-002",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/vessel-status.txt": "Vessel release status\ncurrent version: 3.0\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/vessel-status.txt, change the current version from 3.0 to 1.5. Change nothing else in the file."
+}

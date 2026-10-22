@@ -1,0 +1,37 @@
+{
+ "archetype": "discord-post",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "channel": "announce",
+    "text_contains": "Tessellate migration merged; the pruner is still blocked on review",
+    "type": "discord_posted"
+   },
+   {
+    "channel": "announcements",
+    "text_contains": "Tessellate migration merged; the pruner is still blocked on review",
+    "type": "discord_not_posted"
+   }
+  ],
+  "required_sequence": [
+   "discord_post"
+  ]
+ },
+ "family": "social",
+ "id": "train-discord-post-025",
+ "max_turns": 6,
+ "notes": "Similar-name channel bait; the graded text must land in exactly the named channel.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "announce": [],
+    "announcements": [],
+    "general": []
+   }
+  }
+ },
+ "situation": "Post this update to #announce: 'Tessellate migration merged; the pruner is still blocked on review'. Post it exactly once, to that channel only."
+}

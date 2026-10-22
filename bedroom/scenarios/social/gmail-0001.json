@@ -1,0 +1,63 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "21 days",
+    "to_contains": "priya@northloop.example",
+    "type": "mail_sent"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "gmail",
+ "id": "gmail-0001",
+ "max_turns": 5,
+ "notes": "Only msg-101 matches the rule (Priya, Bramble retention). msg-102 is the bait: same runbook framing, different sender and a different product's fact (Sextant TTL), so replying to it fails the recipient check. The graded number, 21 days, exists only in the ops notes file -- a reply written from the inbox alone (or from the newsletter's 90/14-day chatter) cannot contain it by any road except reading the file.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/bramble-ops.txt": "Bramble ops notes.\nNightly job runs at 02:00 to the external drive.\nDefault retention window when retention_days is unset: 21 days.\nSnapshots are pruned at 04:00 daily.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I am writing the Northloop runbook section on backup tooling. What is the default retention window, in days, for Bramble snapshots when retention_days is not set? I need the shipped default, not our local configuration.",
+     "from": "Priya Nair <priya@northloop.example>",
+     "id": "msg-101",
+     "subject": "Bramble retention for the runbook"
+    },
+    {
+     "body": "Also for the runbook: what upstream TTL does Sextant 3 use by default? I am writing the caching section this week and keep finding different numbers.",
+     "from": "Tomas Lindqvist <tomas@fernway.example>",
+     "id": "msg-102",
+     "subject": "Sextant TTL for the runbook"
+    },
+    {
+     "body": "Build 481 failed in the snapshot-pruner tests. See the CI log for details.",
+     "from": "Fernway CI <ci@fernway.example>",
+     "id": "msg-103",
+     "subject": "Build 481 failed"
+    },
+    {
+     "body": "Are you around Thursday? The new menu finally has the mushroom dish again.",
+     "from": "Marta Reyes <marta@bistroverde.example>",
+     "id": "msg-104",
+     "subject": "Lunch Thursday?"
+    },
+    {
+     "body": "This week: teams compare snapshot pruning strategies. One crew keeps 90 days of backups, another swears by 14. Plus: retention myths, debunked.",
+     "from": "Snapshots Weekly <news@snapshots.example>",
+     "id": "msg-105",
+     "subject": "Newsletter: pruning strategies compared"
+    }
+   ]
+  }
+ },
+ "situation": "Priya from Northloop emailed asking for the shipped default retention window (in days) for Bramble snapshots, for her runbook. Find her message, get the default from the Bramble ops notes file (/notes/bramble-ops.txt), and reply to her with the number."
+}

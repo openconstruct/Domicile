@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/quillmark-status.txt",
+    "text": "Quillmark release status\ncurrent version: 1.3\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-edit-unique-001",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/quillmark-status.txt": "Quillmark release status\ncurrent version: 3.3\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/quillmark-status.txt, change the current version from 3.3 to 1.3. Change nothing else in the file."
+}

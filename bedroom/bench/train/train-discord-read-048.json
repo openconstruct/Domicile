@@ -1,0 +1,43 @@
+{
+ "archetype": "discord-read",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "November 16"
+  ],
+  "required_sequence": [
+   "discord_read"
+  ]
+ },
+ "family": "social",
+ "id": "train-discord-read-048",
+ "max_turns": 6,
+ "notes": "The decision sits mid-chatter; answering from memory or the first message fails.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "ops": [
+     {
+      "author": "kim",
+      "text": "any update on the Cobalt freeze?"
+     },
+     {
+      "author": "lee",
+      "text": "still deciding between two dates"
+     },
+     {
+      "author": "ops-lead",
+      "text": "Decision: the Cobalt deploy freeze starts November 16 and lifts on November 9."
+     },
+     {
+      "author": "kim",
+      "text": "thanks, marking the calendar"
+     }
+    ]
+   }
+  }
+ },
+ "situation": "What did the team decide about the Cobalt deploy freeze in #ops? Read the channel and answer with the start date."
+}

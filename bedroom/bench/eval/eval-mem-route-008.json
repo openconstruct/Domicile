@@ -1,0 +1,47 @@
+{
+ "archetype": "mem-route",
+ "difficulty": 3,
+ "expected": {
+  "final_answer_contains": [
+   "348 Marengo Road"
+  ],
+  "postconditions": [
+   {
+    "text": "348 Marengo Road",
+    "type": "store_contains"
+   },
+   {
+    "text": "52 Antonia Lane",
+    "type": "store_not_contains"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search",
+   "mcp__mem2__mem2_search",
+   "mcp__memory__memory_delete",
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-route-008",
+ "max_turns": 6,
+ "notes": "Escalation by construction: mem0 is stale, the correction lives only in mem2; routing is paid by the required sequence.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "chunks": [
+   {
+    "chunk_index": 0,
+    "date": "2026-09-02",
+    "source_file": "2026-09-02-chat.jsonl",
+    "text": "We moved last week. The new address is 348 Marengo Road; the Antonia Lane house is sold, so anything mailed there is lost."
+   }
+  ],
+  "facts": [
+   "the operator lives at 52 Antonia Lane",
+   "answers email after 18:00"
+  ],
+  "show_listing": true
+ },
+ "situation": "What is the operator's current home address? Make sure long-term memory holds the current address, not a stale one, then answer."
+}

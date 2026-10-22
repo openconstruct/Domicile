@@ -1,0 +1,25 @@
+{
+  "id": "mem0-search-0004",
+  "family": "mem0-search",
+  "difficulty": 3,
+  "setup": {
+    "facts": [
+      "standup moved to 9:30 on 2026-09-14",
+      "standup moved to 10:00 on 2026-10-02",
+      "the team lunch is on Fridays"
+    ]
+  },
+  "situation": "What time is standup now? Search long-term memory for the current standup time.",
+  "expected": {
+    "tool": "mcp__memory__memory_search",
+    "args_match": {
+      "query": {
+        "contains": [
+          "standup"
+        ]
+      }
+    }
+  },
+  "notes": "Two standup facts, one stale; searching is the graded call (recency judgment is downstream).",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

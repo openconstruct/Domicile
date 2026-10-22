@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "4569"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-read-fact-035",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fernway-ops.txt": "Fernway operations.\nThe deploy port for Fernway is 4569.\nNightly jobs run at 02:00.\n",
+   "/notes/meridian-ops.txt": "Meridian operations.\nThe deploy port for Meridian is 4669.\nNightly jobs run at 03:00.\n"
+  }
+ },
+ "situation": "What is the deploy port for Fernway? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

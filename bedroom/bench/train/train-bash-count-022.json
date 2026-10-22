@@ -1,0 +1,24 @@
+{
+ "archetype": "bash-count",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_exact_lines": [
+   "7"
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-count-022",
+ "max_turns": 6,
+ "notes": "grep -c vs eyeballing; a lowercase 'error' line baits a case-insensitive count.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/app.log": "2026-10-21 08:14 ERROR node unreachable\n2026-10-21 08:42 INFO cache flushed\n2026-10-21 08:29 ERROR retry scheduled\n2026-10-21 08:50 ERROR budget check\n2026-10-21 08:23 ERROR node unreachable\n2026-10-21 08:53 ERROR job finished\n2026-10-21 08:43 WARN checkpoint saved\n2026-10-21 08:54 WARN checkpoint saved\n2026-10-21 08:26 ERROR retry scheduled\n2026-10-21 08:47 INFO job finished\n2026-10-21 08:10 ERROR budget check\n2026-10-21 08:56 WARN cache flushed\n2026-10-21 09:01 INFO error counters reset\n"
+  }
+ },
+ "situation": "Count how many lines in /logs/app.log contain the word ERROR (uppercase, exactly as written). Answer with just the number, nothing else."
+}

@@ -1,0 +1,37 @@
+{
+ "overall": 0.4791666666666667,
+ "n": 48,
+ "by_family": {
+  "bash": 0.125,
+  "fs": 0.6,
+  "memory": 0.75,
+  "social": 0.5833333333333334,
+  "web": 1.0
+ },
+ "by_archetype": {
+  "bash-append": 0.0,
+  "bash-bait": 0.0,
+  "bash-chain": 1.0,
+  "bash-count": 0.0,
+  "bash-find": 0.0,
+  "bash-rename": 0.0,
+  "bash-sed": 0.0,
+  "bash-sort": 0.0,
+  "blogger-note": 1.0,
+  "calendar-slot": 0.5,
+  "discord-post": 1.0,
+  "discord-read": 1.0,
+  "fs-edit-unique": 1.0,
+  "fs-glob-list": 1.0,
+  "fs-grep-count": 0.0,
+  "fs-read-fact": 0.0,
+  "fs-write-note": 1.0,
+  "mail-draft": 0.0,
+  "mail-reply-fact": 0.0,
+  "mem-add": 1.0,
+  "mem-delete": 1.0,
+  "mem-route": 0.0,
+  "mem-search": 1.0,
+  "web-fact": 1.0
+ }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "mem0-add-0001",
+  "family": "mem0-add",
+  "difficulty": 1,
+  "setup": {
+    "facts": []
+  },
+  "situation": "The operator just told you: 'I always deploy on Fridays, never Mondays.' Store that preference in long-term memory.",
+  "expected": {
+    "tool": "mcp__memory__memory_add",
+    "args_match": {
+      "text": {
+        "contains": [
+          "deploy",
+          "Fridays"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_contains",
+        "text": "Fridays"
+      }
+    ]
+  },
+  "notes": "Fact must be stored self-contained, not as chat residue.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

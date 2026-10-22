@@ -1,0 +1,5 @@
+Latticework vs Fernway: task runners compared.
+
+Both tools describe work as a graph of tasks, but they aim at different days of your life. Latticework is a build tool at heart: it shines on big local graphs where parallelism decides whether a build takes a minute or twenty. Fernway is a deployment tool: pipelines over SSH, environments, secrets, rollback.
+
+Configuration differs too: Latticework wants a declarative file per project, Fernway a pipeline file per repository. Teams often end up with both: Latticework builds, Fernway ships. Neither replaces the other, whatever their release posts imply.

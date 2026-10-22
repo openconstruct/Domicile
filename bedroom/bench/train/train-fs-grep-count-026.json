@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "7"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-grep-count-026",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/bramble.log": "2026-10-22 INFO worker restarted\n2026-10-18 PRUNE bramble job finished rc=0\n2026-10-15 INFO heartbeat ok\n2026-10-17 INFO heartbeat ok\n2026-10-05 PRUNE bramble job finished rc=0\n2026-10-20 INFO worker restarted\n2026-10-06 PRUNE bramble job finished rc=0\n2026-10-01 WARN disk at 61 percent\n2026-10-23 PRUNE bramble job finished rc=0\n2026-10-08 PRUNE bramble job finished rc=0\n2026-10-17 PRUNE bramble job finished rc=0\n2026-10-20 PRUNE bramble job finished rc=0\n"
+  }
+ },
+ "situation": "How many lines in /logs/bramble.log contain the word PRUNE? Use search, then answer with just the number."
+}

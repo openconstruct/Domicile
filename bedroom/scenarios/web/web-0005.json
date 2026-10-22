@@ -1,0 +1,39 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "16384"
+  ],
+  "postconditions": [
+   {
+    "path": "/notes/parallax.txt",
+    "text": "16384",
+    "type": "file_contains"
+   }
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch",
+   "Write"
+  ]
+ },
+ "family": "web-write",
+ "id": "web-0005",
+ "max_turns": 5,
+ "notes": "Research-then-write: the graded value is only in the tuning guide body. The shared corpus API reference offers the default (4096) as the plausible wrong value.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "ParallaxDB tuning guide.\n\nPage size is chosen when the database file is created and cannot be changed afterwards. The default page_size is 4096 bytes, which suits spinning disks.\n\nFor flash storage, the recommended page_size is 16384 bytes: flash pages align better, and scan throughput improves measurably on large files.\n\nCache sizing: give the cache about a quarter of RAM. Write-ahead log: leave sync on for anything you would mind losing.",
+     "snippet": "Tuning ParallaxDB: page size, cache sizing, and write-ahead log settings for flash and spinning disks.",
+     "title": "ParallaxDB tuning guide",
+     "url": "https://docs.parallaxdb.example/tuning"
+    }
+   ]
+  }
+ },
+ "situation": "Find the recommended ParallaxDB page_size for flash storage on the web, and write it to /notes/parallax.txt so the operator can use it when creating the new database."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "fs-read-0005",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/secret/plans.txt": "phase one",
+      "/public/plans.txt": "tour info"
+    }
+  },
+  "situation": "Read the plans in /secret/plans.txt.",
+  "expected": {
+    "tool": "Read",
+    "args_match": {
+      "path": {
+        "equals": "/secret/plans.txt"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Same-name distractor in /public."
+}

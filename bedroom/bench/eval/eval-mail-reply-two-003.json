@@ -1,0 +1,57 @@
+{
+ "archetype": "mail-reply-two",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "to_contains": "oleg@post.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "body_contains": "6280",
+    "to_contains": "oleg@post.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "generalization": true,
+ "id": "eval-mail-reply-two-003",
+ "max_turns": 6,
+ "notes": "GENERALIZATION: two-fact synthesis across two sources in one reply; train's reply archetype carries one fact.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/marengo-ops.txt": "Marengo ops notes.\nThe shipped default retention window for Marengo snapshots is 30 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "For the Marengo runbook I need two things: the default retention window and the deploy port. I have the port from the infra sheet; can you confirm the retention window from the ops notes?",
+     "from": "oleg@post.bench.test",
+     "id": "msg-301",
+     "subject": "Marengo runbook facts"
+    },
+    {
+     "body": "The Marengo deploy port is 6280. Update your sheets.",
+     "from": "infra@post.bench.test",
+     "id": "msg-302",
+     "subject": "Marengo deploy port"
+    }
+   ]
+  }
+ },
+ "situation": "Oleg needs two facts for the Marengo runbook: the retention window (from the ops notes) and the deploy port (from the infra email). Reply to Oleg with both facts."
+}

@@ -1,0 +1,9 @@
+ParallaxDB release notes.
+
+1.7: faster prefix scans on large files; a rare index corruption on unclean shutdown is fixed.
+
+1.6: the storage engine compacts free pages automatically; backups taken while a transaction is open are now rejected with a clear error.
+
+1.5: scan() gained reverse iteration. Files written by 1.5 and later cannot be opened by 1.4 or older.
+
+1.4: first release with the write-ahead log enabled by default.

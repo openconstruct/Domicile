@@ -1,0 +1,27 @@
+{
+  "id": "fs-list-0001",
+  "family": "fs",
+  "difficulty": 1,
+  "setup": {
+    "files": {
+      "/data/x.csv": "1",
+      "/data/y.csv": "2"
+    }
+  },
+  "situation": "List what's in /data.",
+  "expected": {
+    "tool": "Glob",
+    "args_match": {
+      "path": {
+        "equals": "/data"
+      },
+      "pattern": {
+        "contains": [
+          "*"
+        ]
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Listing, not reading a guessed file."
+}

@@ -1,0 +1,29 @@
+{
+ "archetype": "bash-sed-first",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/marks.txt",
+    "text": "Antonia alpha FINAL and DRAFT again\nstatus: FINAL\nAntonia beta FINAL DRAFT\nnothing to change here\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "generalization": true,
+ "id": "eval-bash-sed-first-006",
+ "max_turns": 6,
+ "notes": "GENERALIZATION: first-per-line replacement; train teaches /g only, so a memorized s/DRAFT/FINAL/g fails file_equals.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/marks.txt": "Antonia alpha DRAFT and DRAFT again\nstatus: DRAFT\nAntonia beta DRAFT DRAFT\nnothing to change here\n"
+  }
+ },
+ "situation": "In /notes/marks.txt, change only the FIRST occurrence of DRAFT on each line to FINAL, in place. Later occurrences on the same line must stay DRAFT."
+}

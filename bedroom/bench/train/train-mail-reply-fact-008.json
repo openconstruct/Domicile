@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "subject_contains": "Fernway",
+    "to_contains": "silvie@mail.example",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-008",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fernway-ops.txt": "Fernway ops notes.\nThe shipped default retention window for Fernway snapshots is 14 days when retention_days is not set.\n",
+   "/notes/tessellate-ops.txt": "Tessellate ops notes.\nThe shipped default retention window for Tessellate snapshots is 21 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Fernway snapshots. What is it, in days?",
+     "from": "silvie@mail.example",
+     "id": "msg-101",
+     "subject": "Fernway retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Tessellate -- the shipped default retention window, in days? (Answer on the Tessellate thread, not this one.)",
+     "from": "silvie@mail.example",
+     "id": "msg-102",
+     "subject": "Tessellate retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Silvie emailed asking for the shipped default retention window for Fernway snapshots for the runbook. Find the email, check the ops notes, and reply to Silvie with the window. Reply only to that email."
+}

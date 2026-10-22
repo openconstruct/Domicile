@@ -1,0 +1,41 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "3.2"
+  ],
+  "postconditions": [
+   {
+    "text": "stable version of Tessellate is 3.2",
+    "type": "store_contains"
+   }
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch",
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "web-store",
+ "id": "web-0004",
+ "max_turns": 5,
+ "notes": "Research-then-remember: the version exists only in the announcement body (the shared corpus changelog tops out at 2.4, the plausible stale answer). The stored fact must be third-person and carry the version.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "the operator builds their site with Tessellate"
+  ],
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "Tessellate release announcement.\n\nTessellate 3.2 is available today, and 3.2 is the current stable release. The theme engine was rebuilt for nested partials, incremental builds are roughly twice as fast, and the preview server reloads on configuration changes.\n\nThe 2.4 line stays available for anyone pinned to it, but new sites should start on the current stable. Upgrade notes are in the release post's second half; there are no breaking configuration changes.",
+     "snippet": "The newest Tessellate release is now the current stable, with a rebuilt theme engine and much faster incremental builds.",
+     "title": "Tessellate release announcement - October",
+     "url": "https://tessellate.example/blog/new-stable-release"
+    }
+   ]
+  }
+ },
+ "situation": "What is the current stable version of Tessellate? Look it up on the web, then store the fact in long-term memory so it is remembered, and confirm the version in your answer."
+}

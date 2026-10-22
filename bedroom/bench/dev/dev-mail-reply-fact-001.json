@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "subject_contains": "Fable",
+    "to_contains": "dario@sample.dev",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "dev-mail-reply-fact-001",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fable-ops.txt": "Fable ops notes.\nThe shipped default retention window for Fable snapshots is 30 days when retention_days is not set.\n",
+   "/notes/kelvin-ops.txt": "Kelvin ops notes.\nThe shipped default retention window for Kelvin snapshots is 37 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Fable snapshots. What is it, in days?",
+     "from": "dario@sample.dev",
+     "id": "msg-101",
+     "subject": "Fable retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Kelvin -- the shipped default retention window, in days? (Answer on the Kelvin thread, not this one.)",
+     "from": "dario@sample.dev",
+     "id": "msg-102",
+     "subject": "Kelvin retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Dario emailed asking for the shipped default retention window for Fable snapshots for the runbook. Find the email, check the ops notes, and reply to Dario with the window. Reply only to that email."
+}

@@ -1,0 +1,7 @@
+ParallaxDB frequently asked questions.
+
+Is the database really one file? Yes: data, indexes, and the write-ahead log live in a single file, which makes backups a plain file copy while the database is closed.
+
+Is it durable? With the default settings, a committed transaction survives a process crash; surviving an OS crash needs the sync option, at some speed cost.
+
+Can two processes write at once? No. ParallaxDB is embedded and single-writer; use it inside one application, or put a service in front of it.

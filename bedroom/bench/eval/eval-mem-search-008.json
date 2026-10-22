@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Alder"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-search-008",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Anya's sister lives in Corvin",
+   "takes the 7:40 train",
+   "Anya lives in Alder",
+   "Anya works in Corvin"
+  ]
+ },
+ "situation": "Which city does Anya live in? Search long-term memory, then answer."
+}

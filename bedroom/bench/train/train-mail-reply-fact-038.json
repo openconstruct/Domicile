@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "subject_contains": "Bramble",
+    "to_contains": "priya@example.com",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-038",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/bramble-ops.txt": "Bramble ops notes.\nThe shipped default retention window for Bramble snapshots is 14 days when retention_days is not set.\n",
+   "/notes/northloop-ops.txt": "Northloop ops notes.\nThe shipped default retention window for Northloop snapshots is 21 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Bramble snapshots. What is it, in days?",
+     "from": "priya@example.com",
+     "id": "msg-101",
+     "subject": "Bramble retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Northloop -- the shipped default retention window, in days? (Answer on the Northloop thread, not this one.)",
+     "from": "priya@example.com",
+     "id": "msg-102",
+     "subject": "Northloop retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Priya emailed asking for the shipped default retention window for Bramble snapshots for the runbook. Find the email, check the ops notes, and reply to Priya with the window. Reply only to that email."
+}

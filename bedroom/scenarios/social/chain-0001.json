@@ -1,0 +1,48 @@
+{
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "23:00 to 23:45",
+    "to_contains": "operator@example.com",
+    "type": "mail_sent"
+   }
+  ],
+  "required_sequence": [
+   "discord_read",
+   "gmail_send"
+  ]
+ },
+ "family": "social-chain",
+ "id": "chain-0001",
+ "max_turns": 4,
+ "notes": "Two-surface chain: the fact lives in #ops history and only counts once it is inside a sent mail to the operator. The older 21:00-21:30 window in the same channel is the bait value -- mailing it fails body_contains. Posting the window back to Discord instead of emailing, or emailing from memory without reading, fails the sequence.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "general": [
+     {
+      "author": "Tomas",
+      "text": "Deploy night again -- coffee is on."
+     }
+    ],
+    "ops": [
+     {
+      "author": "Marcus",
+      "text": "Last Tuesday's window was 21:00 to 21:30 UTC -- short one."
+     },
+     {
+      "author": "Priya",
+      "text": "Reminder: the freeze starts Nov 2, get your deploys in this week."
+     },
+     {
+      "author": "Dana",
+      "text": "Tonight's Fernway deploy window is 23:00 to 23:45 UTC. Only Fernway deploys tonight."
+     }
+    ]
+   }
+  }
+ },
+ "situation": "Check the ops channel for tonight's deploy window and email it to the operator (operator@example.com) so they see it before the freeze."
+}

@@ -1,0 +1,36 @@
+{
+  "difficulty": 2,
+  "expected": {
+    "final_answer_contains": [
+      "blue planter"
+    ],
+    "postconditions": [],
+    "required_sequence": [
+      "mcp__mem2__mem2_search",
+      "mcp__mem2__mem2_get_chunk"
+    ]
+  },
+  "family": "mem-escalation",
+  "id": "multi-route-0004",
+  "max_turns": 4,
+  "notes": "Search snippets truncate at 80 chars; the key's location sits past the cut in chunk 1. Answering from the snippet guesses; the graded road is fetch-then-answer.",
+  "reward_rule": "sequence followed + final answer correct = 1 else 0",
+  "setup": {
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "date": "2026-07-04",
+        "source_file": "2026-07-04-chat.jsonl",
+        "text": "Long planning talk about the workshop rebuild, the budget split, and who brings what to the site on the first day of work."
+      },
+      {
+        "chunk_index": 1,
+        "date": "2026-07-04",
+        "source_file": "2026-07-04-chat.jsonl",
+        "text": "End of the same talk, after a long digression about scheduling, tools, lunches, and the order the benches should be rebuilt in during the second week: the spare workshop key is hidden under the blue planter by the side gate, in case anyone gets locked out."
+      }
+    ],
+    "facts": []
+  },
+  "situation": "Where is the spare workshop key hidden? Search past conversations; the search snippet alone will not contain the answer, so fetch the full chunk before answering."
+}

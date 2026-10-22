@@ -1,0 +1,82 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "start": "2026-10-23T12:30",
+    "title_contains": "Quillmark sync",
+    "type": "calendar_event"
+   }
+  ],
+  "required_sequence": [
+   "calendar_list",
+   "calendar_create"
+  ]
+ },
+ "family": "calendar",
+ "id": "calendar-0001",
+ "max_turns": 4,
+ "notes": "Friday's gaps: 12:30-13:15 is exactly 45 minutes; every other gap inside 09:00-17:00 is either zero or inside the focus block. 12:30 on Saturday (evt-009, same clock time, old series) is the day-confusion bait -- calendar_event grades the exact Friday start, so booking there fails. The exact-start postcondition also kills the plausible 14:00 and 16:00 guesses.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "calendar": [
+    {
+     "end": "2026-10-23T10:00",
+     "id": "evt-001",
+     "start": "2026-10-23T09:00",
+     "title": "Team standup"
+    },
+    {
+     "end": "2026-10-23T12:00",
+     "id": "evt-002",
+     "start": "2026-10-23T10:00",
+     "title": "Focus block - no meetings"
+    },
+    {
+     "end": "2026-10-23T12:30",
+     "id": "evt-003",
+     "start": "2026-10-23T12:00",
+     "title": "Lunch with Dana"
+    },
+    {
+     "end": "2026-10-23T14:30",
+     "id": "evt-004",
+     "start": "2026-10-23T13:15",
+     "title": "Vendor call - Sextant renewal"
+    },
+    {
+     "end": "2026-10-23T15:00",
+     "id": "evt-005",
+     "start": "2026-10-23T14:30",
+     "title": "Design review"
+    },
+    {
+     "end": "2026-10-23T15:30",
+     "id": "evt-006",
+     "start": "2026-10-23T15:00",
+     "title": "1:1 with Marcus"
+    },
+    {
+     "end": "2026-10-23T17:00",
+     "id": "evt-007",
+     "start": "2026-10-23T15:30",
+     "title": "Deep work - docs"
+    },
+    {
+     "end": "2026-10-22T09:45",
+     "id": "evt-008",
+     "start": "2026-10-22T09:00",
+     "title": "Dentist"
+    },
+    {
+     "end": "2026-10-24T13:15",
+     "id": "evt-009",
+     "start": "2026-10-24T12:30",
+     "title": "Quillmark sync (old series)"
+    }
+   ]
+  }
+ },
+ "situation": "Book a 45-minute 'Quillmark sync' on Friday 2026-10-23, inside working hours (09:00-17:00). It must not overlap anything already on the calendar and must not fall in the focus block. Check the calendar first -- there is exactly one slot that works."
+}

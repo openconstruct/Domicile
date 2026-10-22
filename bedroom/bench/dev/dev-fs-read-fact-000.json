@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "4501"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-read-fact-000",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/fable-ops.txt": "Fable operations.\nThe metrics port for Fable is 4751.\nNightly jobs run at 03:00.\n",
+   "/notes/heliotrope-ops.txt": "Heliotrope operations.\nThe metrics port for Heliotrope is 4501.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the metrics port for Heliotrope? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

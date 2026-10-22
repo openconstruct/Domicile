@@ -1,0 +1,28 @@
+{
+  "id": "fs-write-0001",
+  "family": "fs",
+  "difficulty": 1,
+  "setup": {
+    "files": {}
+  },
+  "situation": "Write 'hello bedroom' to a new file /out/greeting.txt.",
+  "expected": {
+    "tool": "Write",
+    "args_match": {
+      "path": {
+        "equals": "/out/greeting.txt"
+      },
+      "content": {
+        "contains": [
+          "hello bedroom"
+        ]
+      }
+    },
+    "postcondition": {
+      "path": "/out/greeting.txt",
+      "contains": "hello bedroom"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Put it in the file, not the chat."
+}

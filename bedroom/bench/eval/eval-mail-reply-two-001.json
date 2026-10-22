@@ -1,0 +1,57 @@
+{
+ "archetype": "mail-reply-two",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "to_contains": "vera@office.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "body_contains": "3906",
+    "to_contains": "vera@office.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "generalization": true,
+ "id": "eval-mail-reply-two-001",
+ "max_turns": 6,
+ "notes": "GENERALIZATION: two-fact synthesis across two sources in one reply; train's reply archetype carries one fact.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/vessel-ops.txt": "Vessel ops notes.\nThe shipped default retention window for Vessel snapshots is 14 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "For the Vessel runbook I need two things: the default retention window and the deploy port. I have the port from the infra sheet; can you confirm the retention window from the ops notes?",
+     "from": "vera@office.bench.test",
+     "id": "msg-301",
+     "subject": "Vessel runbook facts"
+    },
+    {
+     "body": "The Vessel deploy port is 3906. Update your sheets.",
+     "from": "infra@office.bench.test",
+     "id": "msg-302",
+     "subject": "Vessel deploy port"
+    }
+   ]
+  }
+ },
+ "situation": "Vera needs two facts for the Vessel runbook: the retention window (from the ops notes) and the deploy port (from the infra email). Reply to Vera with both facts."
+}

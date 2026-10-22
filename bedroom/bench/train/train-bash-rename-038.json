@@ -1,0 +1,38 @@
+{
+ "archetype": "bash-rename",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/docs/memo-2025.txt",
+    "text": "Cobalt planning memo \u2014 final version.\n",
+    "type": "file_equals"
+   },
+   {
+    "path": "/docs/memo-2024.txt",
+    "type": "file_not_exists"
+   },
+   {
+    "path": "/docs/memo-2024-draft.txt",
+    "text": "Rough draft \u2014 do not circulate.\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-rename-038",
+ "max_turns": 6,
+ "notes": "Similar-name sibling bait; copying instead of moving leaves the source behind.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/docs/memo-2024-draft.txt": "Rough draft \u2014 do not circulate.\n",
+   "/docs/memo-2024.txt": "Cobalt planning memo \u2014 final version.\n"
+  }
+ },
+ "situation": "Rename /docs/memo-2024.txt to /docs/memo-2025.txt, in the same folder. Leave every other file exactly as it is."
+}

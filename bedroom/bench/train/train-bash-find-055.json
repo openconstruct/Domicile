@@ -1,0 +1,32 @@
+{
+ "archetype": "bash-find",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/deep/nested/beta-31.md",
+   "/data/exports/beta-37.md",
+   "/data/gamma-38.md",
+   "/data/old/beta-22.md"
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-find-055",
+ "max_turns": 6,
+ "notes": "find vs top-level ls; suffix bait (.bak) and nested folders.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/catalog.txt": "data\n",
+   "/data/deep/nested/beta-31.md": "data\n",
+   "/data/exports/beta-37.md": "data\n",
+   "/data/gamma-38.md": "data\n",
+   "/data/old/beta-22.md": "data\n",
+   "/data/old/first-1.md.bak": "data\n"
+  }
+ },
+ "situation": "List every file under /data whose name ends in .md \u2014 full paths, one per line, nothing else in your answer."
+}

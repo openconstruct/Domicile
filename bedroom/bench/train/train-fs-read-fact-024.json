@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "5407"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-read-fact-024",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/northloop-ops.txt": "Northloop operations.\nThe metrics port for Northloop is 5657.\nNightly jobs run at 03:00.\n",
+   "/notes/tessellate-ops.txt": "Tessellate operations.\nThe metrics port for Tessellate is 5407.\nNightly jobs run at 02:00.\n"
+  }
+ },
+ "situation": "What is the metrics port for Tessellate? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

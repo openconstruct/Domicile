@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Bexley"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-064",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Tomas lives in Bexley",
+   "Tomas's sister lives in Holloway",
+   "Tomas works in Holloway",
+   "prefers tea in the morning"
+  ]
+ },
+ "situation": "Which city does Tomas live in? Search long-term memory, then answer."
+}

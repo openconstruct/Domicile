@@ -1,0 +1,28 @@
+{
+  "id": "fs-list-0002",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/proj/src/main.py": "x",
+      "/proj/src/util.py": "y",
+      "/proj/README.md": "z"
+    }
+  },
+  "situation": "List the files in /proj/src.",
+  "expected": {
+    "tool": "Glob",
+    "args_match": {
+      "path": {
+        "equals": "/proj/src"
+      },
+      "pattern": {
+        "contains": [
+          "*"
+        ]
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Nested dir; listing root would be the wrong scope."
+}

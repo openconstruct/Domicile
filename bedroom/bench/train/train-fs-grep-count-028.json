@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "4"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-grep-count-028",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/cobalt.log": "2026-10-16 INFO queue drained\n2026-10-03 DEPLOY cobalt job finished rc=0\n2026-10-25 INFO heartbeat ok\n2026-10-22 WARN disk at 61 percent\n2026-10-16 INFO heartbeat ok\n2026-10-20 DEPLOY cobalt job finished rc=0\n2026-10-16 DEPLOY cobalt job finished rc=0\n2026-10-19 DEPLOY cobalt job finished rc=0\n2026-10-12 WARN disk at 61 percent\n2026-10-16 WARN disk at 61 percent\n2026-10-22 INFO queue drained\n"
+  }
+ },
+ "situation": "How many lines in /logs/cobalt.log contain the word DEPLOY? Use search, then answer with just the number."
+}

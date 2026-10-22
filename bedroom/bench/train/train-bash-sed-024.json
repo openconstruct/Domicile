@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-sed",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/release.txt",
+    "text": "Bramble release checklist\n- build: DONE\n- smoke tests: DONE\n- changelog: done\n- announcement: DONE\nShip only when nothing is todo.\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-sed-024",
+ "max_turns": 6,
+ "notes": "sed in place vs the overwrite bait; the lowercase form in the last line must survive.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release.txt": "Bramble release checklist\n- build: TODO\n- smoke tests: TODO\n- changelog: done\n- announcement: TODO\nShip only when nothing is todo.\n"
+  }
+ },
+ "situation": "In /notes/release.txt, change every TODO to DONE, in place. Leave everything else in the file exactly as it is."
+}

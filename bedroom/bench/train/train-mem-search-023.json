@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Bexley"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-023",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Lena works in Alder",
+   "Lena lives in Bexley",
+   "keeps the server room key in the blue drawer",
+   "Lena's sister lives in Alder"
+  ]
+ },
+ "situation": "Which city does Lena live in? Search long-term memory, then answer."
+}

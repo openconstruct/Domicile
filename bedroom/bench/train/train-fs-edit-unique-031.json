@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/lattice-status.txt",
+    "text": "Lattice release status\ncurrent version: 3.1\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-edit-unique-031",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/lattice-status.txt": "Lattice release status\ncurrent version: 3.7\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/lattice-status.txt, change the current version from 3.7 to 3.1. Change nothing else in the file."
+}

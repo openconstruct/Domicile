@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-add",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "text": "Henrik reviews Lattice deploys every Friday",
+    "type": "store_contains"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-add-069",
+ "max_turns": 6,
+ "notes": "The fact must land in the store verbatim enough to match; narrating it earns 0.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "uses a standing desk"
+  ]
+ },
+ "situation": "Remember this for later: Henrik reviews Lattice deploys every Friday. Store it in long-term memory."
+}

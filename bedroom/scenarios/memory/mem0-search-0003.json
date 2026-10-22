@@ -1,0 +1,26 @@
+{
+  "id": "mem0-search-0003",
+  "family": "mem0-search",
+  "difficulty": 2,
+  "setup": {
+    "facts": [
+      "the operator decided to use Postgres for the ledger project",
+      "the operator considered SQLite for the ledger project but rejected it",
+      "the operator uses Postgres at work"
+    ]
+  },
+  "situation": "Which database did the operator decide on for the ledger project? Search long-term memory.",
+  "expected": {
+    "tool": "mcp__memory__memory_search",
+    "args_match": {
+      "query": {
+        "contains": [
+          "ledger",
+          "database"
+        ]
+      }
+    }
+  },
+  "notes": "'Decided' vs 'considered and rejected' -- query must be about the ledger decision.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

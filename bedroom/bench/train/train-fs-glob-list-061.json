@@ -1,0 +1,37 @@
+{
+ "archetype": "fs-glob-list",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/report-19.md",
+   "/data/report-20.md",
+   "/data/report-22.md",
+   "/data/report-23.md",
+   "/data/report-7.md"
+  ],
+  "required_sequence": [
+   "Glob"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-glob-list-061",
+ "max_turns": 6,
+ "notes": "Glob pattern discipline; .bak siblings and other extensions are bait.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/draft-18.txt": "contents of draft-18.txt\n",
+   "/data/draft-22.txt": "contents of draft-22.txt\n",
+   "/data/draft-25.txt": "contents of draft-25.txt\n",
+   "/data/notes-27.md.bak": "contents of notes-27.md.bak\n",
+   "/data/notes-9.md.bak": "contents of notes-9.md.bak\n",
+   "/data/report-19.md": "contents of report-19.md\n",
+   "/data/report-20.md": "contents of report-20.md\n",
+   "/data/report-22.md": "contents of report-22.md\n",
+   "/data/report-23.md": "contents of report-23.md\n",
+   "/data/report-7.md": "contents of report-7.md\n"
+  }
+ },
+ "situation": "List every file in /data whose name ends in .md \u2014 full paths, one per line, nothing else in your answer."
+}

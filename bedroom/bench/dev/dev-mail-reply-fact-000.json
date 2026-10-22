@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "subject_contains": "Heliotrope",
+    "to_contains": "nadia@inbox.sample",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "dev-mail-reply-fact-000",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/heliotrope-ops.txt": "Heliotrope ops notes.\nThe shipped default retention window for Heliotrope snapshots is 30 days when retention_days is not set.\n",
+   "/notes/ostara-ops.txt": "Ostara ops notes.\nThe shipped default retention window for Ostara snapshots is 39 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Heliotrope snapshots. What is it, in days?",
+     "from": "nadia@inbox.sample",
+     "id": "msg-101",
+     "subject": "Heliotrope retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Ostara -- the shipped default retention window, in days? (Answer on the Ostara thread, not this one.)",
+     "from": "nadia@inbox.sample",
+     "id": "msg-102",
+     "subject": "Ostara retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Nadia emailed asking for the shipped default retention window for Heliotrope snapshots for the runbook. Find the email, check the ops notes, and reply to Nadia with the window. Reply only to that email."
+}

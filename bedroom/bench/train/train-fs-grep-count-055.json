@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "2"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-grep-count-055",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/northloop.log": "2026-10-03 INFO queue drained\n2026-10-24 INFO checkpoint saved\n2026-10-18 INFO checkpoint saved\n2026-10-22 INFO checkpoint saved\n2026-10-11 SYNC northloop job finished rc=0\n2026-10-26 WARN disk at 61 percent\n2026-10-02 INFO checkpoint saved\n2026-10-09 SYNC northloop job finished rc=0\n2026-10-04 INFO queue drained\n"
+  }
+ },
+ "situation": "How many lines in /logs/northloop.log contain the word SYNC? Use search, then answer with just the number."
+}

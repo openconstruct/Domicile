@@ -1,0 +1,31 @@
+{
+  "id": "mem0-add-0003",
+  "family": "mem0-add",
+  "difficulty": 2,
+  "setup": {
+    "facts": []
+  },
+  "situation": "Remember this for later: the backup drive is the blue one labelled 'ARCHIVE-2', kept in the desk drawer.",
+  "expected": {
+    "tool": "mcp__memory__memory_add",
+    "args_match": {
+      "text": {
+        "contains": [
+          "ARCHIVE-2"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_contains",
+        "text": "ARCHIVE-2"
+      },
+      {
+        "type": "store_count",
+        "equals": 1
+      }
+    ]
+  },
+  "notes": "Plain fact storage; store_count guards against double-storing.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

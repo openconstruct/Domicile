@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "5"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-grep-count-032",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/sextant.log": "2026-10-02 WARN disk at 61 percent\n2026-10-05 INFO queue drained\n2026-10-11 INFO heartbeat ok\n2026-10-07 INFO heartbeat ok\n2026-10-04 DEPLOY sextant job finished rc=0\n2026-10-25 DEPLOY sextant job finished rc=0\n2026-10-05 DEPLOY sextant job finished rc=0\n2026-10-14 INFO worker restarted\n2026-10-04 DEPLOY sextant job finished rc=0\n2026-10-12 DEPLOY sextant job finished rc=0\n2026-10-15 INFO heartbeat ok\n"
+  }
+ },
+ "situation": "How many lines in /logs/sextant.log contain the word DEPLOY? Use search, then answer with just the number."
+}

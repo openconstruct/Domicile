@@ -1,0 +1,34 @@
+{
+  "id": "fs-write-0002",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/out/log.txt": "day one\n"
+    }
+  },
+  "situation": "Append 'day two' to /out/log.txt without erasing day one.",
+  "expected": {
+    "tool": "Write",
+    "args_match": {
+      "path": {
+        "equals": "/out/log.txt"
+      },
+      "content": {
+        "contains": [
+          "day one",
+          "day two"
+        ]
+      }
+    },
+    "postcondition": {
+      "path": "/out/log.txt",
+      "contains": [
+        "day one",
+        "day two"
+      ]
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Append has no native tool: the real Write overwrites, so the correct call writes old+new content in full. A Write of only the new line erases day one and fails -- the real-world failure mode."
+}

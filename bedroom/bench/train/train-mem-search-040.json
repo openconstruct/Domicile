@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Eastvale"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-040",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "keeps the server room key in the blue drawer",
+   "Felix works in Alder",
+   "Felix lives in Eastvale",
+   "Felix's sister lives in Alder"
+  ]
+ },
+ "situation": "Which city does Felix live in? Search long-term memory, then answer."
+}

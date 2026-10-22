@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "2"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-grep-count-033",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/fernway.log": "2026-10-02 SYNC fernway job finished rc=0\n2026-10-02 INFO queue drained\n2026-10-23 SYNC fernway job finished rc=0\n2026-10-13 INFO worker restarted\n2026-10-08 WARN disk at 61 percent\n2026-10-10 INFO worker restarted\n2026-10-04 INFO worker restarted\n2026-10-21 WARN disk at 61 percent\n2026-10-19 INFO worker restarted\n2026-10-04 WARN disk at 61 percent\n"
+  }
+ },
+ "situation": "How many lines in /logs/fernway.log contain the word SYNC? Use search, then answer with just the number."
+}

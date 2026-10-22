@@ -1,0 +1,21 @@
+{
+  "id": "fs-read-0004",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/inbox/msg1.txt": "meeting moved to 3pm"
+    }
+  },
+  "situation": "Read /inbox/msg1.txt.",
+  "expected": {
+    "tool": "Read",
+    "args_match": {
+      "path": {
+        "equals": "/inbox/msg1.txt"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Plain read, mid difficulty by sparse context."
+}

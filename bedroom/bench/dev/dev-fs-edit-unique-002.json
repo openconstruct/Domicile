@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/dunmore-status.txt",
+    "text": "Dunmore release status\ncurrent version: 6.4\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-edit-unique-002",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/dunmore-status.txt": "Dunmore release status\ncurrent version: 2.1\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/dunmore-status.txt, change the current version from 2.1 to 6.4. Change nothing else in the file."
+}

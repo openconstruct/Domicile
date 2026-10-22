@@ -1,0 +1,21 @@
+{
+  "id": "fs-read-0001",
+  "family": "fs",
+  "difficulty": 1,
+  "setup": {
+    "files": {
+      "/notes/todo.txt": "Buy milk\nCall the plumber\n"
+    }
+  },
+  "situation": "Read the todo list at /notes/todo.txt and tell me what's on it \u2014 actually just fetch its contents with the file tool.",
+  "expected": {
+    "tool": "Read",
+    "args_match": {
+      "path": {
+        "equals": "/notes/todo.txt"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Obvious read; answering from memory is impossible, no other file exists."
+}

@@ -1,0 +1,26 @@
+{
+ "archetype": "fs-write-note",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/northloop-access.txt",
+    "text": "Access code for the Northloop lab, issued to Silvie: 360-115\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Write"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-write-note-038",
+ "max_turns": 6,
+ "notes": "Verbatim write; the graded content is exact, punctuation included.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {}
+ },
+ "situation": "Write a new file at /notes/northloop-access.txt containing exactly this line and nothing else: 'Access code for the Northloop lab, issued to Silvie: 360-115' followed by a newline."
+}

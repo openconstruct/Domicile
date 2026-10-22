@@ -1,0 +1,7 @@
+# Bedroom: OPTIONAL training/eval extras. Domicile itself does not need these.
+# Harness, bench and eval runs are stdlib-only (Python 3.11+); this file is for training.
+torch
+transformers
+accelerate
+peft
+bitsandbytes   # optional: only used for full-parameter runs, not LoRA

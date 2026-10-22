@@ -1,0 +1,32 @@
+{
+  "id": "fs-edit-0001",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/cfg/app.txt": "mode=debug\n"
+    }
+  },
+  "situation": "Change mode=debug to mode=release in /cfg/app.txt.",
+  "expected": {
+    "tool": "Edit",
+    "args_match": {
+      "path": {
+        "equals": "/cfg/app.txt"
+      },
+      "old": {
+        "equals": "mode=debug"
+      },
+      "new": {
+        "equals": "mode=release"
+      }
+    },
+    "postcondition": {
+      "path": "/cfg/app.txt",
+      "contains": "mode=release",
+      "not_contains": "mode=debug"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Surgical edit, not a full rewrite guess."
+}

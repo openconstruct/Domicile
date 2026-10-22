@@ -1,0 +1,54 @@
+{
+ "difficulty": 3,
+ "expected": {
+  "final_answer_contains": [
+   "10:15"
+  ],
+  "postconditions": [
+   {
+    "text": "10:15",
+    "type": "store_contains"
+   },
+   {
+    "text": "9:30",
+    "type": "store_not_contains"
+   }
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch",
+   "mcp__memory__memory_delete",
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "web-stale",
+ "id": "web-0006",
+ "max_turns": 6,
+ "notes": "Web-corrected memory: mem0 holds the stale time, the handbook page carries the correction. The full road is search -> fetch -> delete the stale fact -> add the corrected one; the listing is shown so the id is known.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "the operator's team standup is at 9:30 AM",
+   "the operator works from home on Thursdays"
+  ],
+  "show_listing": true,
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "Team handbook: meetings.\n\nDaily standup: as of the October re-org, standup moved to 10:15 AM. It was at 9:30 AM before the move; calendar invites were reissued, so delete any old series you still hold.\n\nWeekly review: Fridays, 30 minutes, notes in the shared log.\nPlanning: first Monday of the month. Anything not in this handbook is a rumour.",
+     "snippet": "Standup, review, and planning cadences for the team, from the team handbook.",
+     "title": "Team handbook - meetings",
+     "url": "https://handbook.northloop.example/meetings"
+    },
+    {
+     "body": "Team handbook: holidays.\n\nThe office closes for the last week of December. Public holidays follow the regional calendar. Shutdown weeks are announced a quarter ahead, and on-call cover is arranged by the team lead.\n\nCarry-over: up to five unused days move into the next year.",
+     "snippet": "Public holidays, shutdown weeks, and the team calendar, from the team handbook.",
+     "title": "Team handbook - holidays",
+     "url": "https://handbook.northloop.example/holidays"
+    }
+   ]
+  }
+ },
+ "situation": "The operator says the team standup moved. Check the team handbook on the web for the new time, fix long-term memory so it holds the new time instead of the old one, and say the new time."
+}

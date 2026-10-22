@@ -1,0 +1,38 @@
+{
+  "id": "mem1-edit-0001",
+  "family": "mem1-edit",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/memory/practices.md": "Working agreements.\n- Answer plainly.\n"
+    }
+  },
+  "situation": "Add this working agreement to /memory/practices.md: 'Verify before contradicting.' Use the edit tool.",
+  "expected": {
+    "tool": "Edit",
+    "args_match": {
+      "path": {
+        "equals": "/memory/practices.md"
+      },
+      "new": {
+        "contains": [
+          "Verify before contradicting"
+        ]
+      }
+    },
+    "postconditions": [
+      {
+        "type": "file_contains",
+        "path": "/memory/practices.md",
+        "text": "Verify before contradicting"
+      },
+      {
+        "type": "file_max_tokens",
+        "path": "/memory/practices.md",
+        "max": 3000
+      }
+    ]
+  },
+  "notes": "mem1 files are edited with file tools; the practices.md cap (3000) rides along as a postcondition.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

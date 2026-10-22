@@ -1,0 +1,37 @@
+{
+ "archetype": "discord-post",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "channel": "deploys",
+    "text_contains": "Marengo 2.4 freeze starts tonight at 23:00 UTC",
+    "type": "discord_posted"
+   },
+   {
+    "channel": "dev-chat",
+    "text_contains": "Marengo 2.4 freeze starts tonight at 23:00 UTC",
+    "type": "discord_not_posted"
+   }
+  ],
+  "required_sequence": [
+   "discord_post"
+  ]
+ },
+ "family": "social",
+ "id": "eval-discord-post-007",
+ "max_turns": 6,
+ "notes": "Similar-name channel bait; the graded text must land in exactly the named channel.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "deploys": [],
+    "dev-chat": [],
+    "general": []
+   }
+  }
+ },
+ "situation": "Post this update to #deploys: 'Marengo 2.4 freeze starts tonight at 23:00 UTC'. Post it exactly once, to that channel only."
+}

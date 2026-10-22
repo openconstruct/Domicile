@@ -1,0 +1,38 @@
+{
+ "difficulty": 3,
+ "expected": {
+  "final_answer_contains": [
+   "last-writer-wins"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch",
+   "WebFetch"
+  ]
+ },
+ "family": "web-chain",
+ "id": "web-0008",
+ "max_turns": 5,
+ "notes": "Two-hop chain: the sync guide refuses to state the strategy and points at the changelog; the graded string exists only in the changelog body. Fetching only the guide cannot answer.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "Quillmark sync guide.\n\nPair two devices from Settings > Sync, then let them find each other on the local network. When both devices edit the same note while offline, Quillmark resolves the conflict with its merge strategy.\n\nThe default merge strategy changed in a recent release, and this guide deliberately does not restate it: see the Quillmark changelog (https://docs.quillmark.example/changelog) for the current default.",
+     "snippet": "Quillmark sync: pairing devices, conflict handling, and merge behaviour between notebooks.",
+     "title": "Quillmark sync guide",
+     "url": "https://docs.quillmark.example/sync"
+    },
+    {
+     "body": "Quillmark changelog.\n\n2.9 (October): the default merge strategy for sync conflicts is now last-writer-wins, replacing the old file-name suffixing behaviour. Conflicts are logged in the sync pane.\n\n2.8 (July): export to a single archive file; pairing codes last ten minutes instead of five.\n\n2.7 (April): outline pane gains drag reordering.",
+     "snippet": "Quillmark release history: sync, merge, and export changes by version.",
+     "title": "Quillmark changelog",
+     "url": "https://docs.quillmark.example/changelog"
+    }
+   ]
+  }
+ },
+ "situation": "What is Quillmark's current default merge strategy for sync conflicts? Start from the sync guide on the web and follow where it points."
+}

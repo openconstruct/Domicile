@@ -1,0 +1,32 @@
+{
+ "archetype": "bash-find",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/deep/nested/delta-12.csv",
+   "/data/exports/beta-21.csv",
+   "/data/gamma-34.csv",
+   "/data/old/delta-30.csv"
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-find-026",
+ "max_turns": 6,
+ "notes": "find vs top-level ls; suffix bait (.bak) and nested folders.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/catalog.txt": "data\n",
+   "/data/deep/nested/delta-12.csv": "data\n",
+   "/data/exports/beta-21.csv": "data\n",
+   "/data/gamma-34.csv": "data\n",
+   "/data/old/delta-30.csv": "data\n",
+   "/data/old/first-1.csv.bak": "data\n"
+  }
+ },
+ "situation": "List every file under /data whose name ends in .csv \u2014 full paths, one per line, nothing else in your answer."
+}

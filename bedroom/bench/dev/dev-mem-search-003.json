@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Dunmore"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "dev-mem-search-003",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Sven lives in Dunmore",
+   "Sven's sister lives in Alder",
+   "takes the 7:40 train",
+   "Sven works in Alder"
+  ]
+ },
+ "situation": "Which city does Sven live in? Search long-term memory, then answer."
+}

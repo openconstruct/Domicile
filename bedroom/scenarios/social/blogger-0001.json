@@ -1,0 +1,42 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "offline mode",
+    "type": "blog_posted"
+   }
+  ],
+  "required_sequence": [
+   "Read",
+   "blogger_post"
+  ]
+ },
+ "family": "blogger",
+ "id": "blogger-0001",
+ "max_turns": 4,
+ "notes": "The graded phrase 'offline mode' exists only in the release-note file, so the post must be sourced from the file. discord_post is the bait: channels are seeded and posting the same summary there feels like announcing, but blog_posted only inspects the Blogger state and the required sequence names blogger_post.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release-note.txt": "Fernway 2.4 -- release notes (final).\n\nHeadline changes: offline mode for field crews, sync time cut in half, and a fix for the snapshot pruner race.\nSummary line: Fernway 2.4 adds offline mode and cuts sync time in half.\n"
+  },
+  "social": {
+   "discord": {
+    "announcements": [
+     {
+      "author": "Dana",
+      "text": "Reminder: freeze planning starts next week."
+     }
+    ],
+    "general": [
+     {
+      "author": "Marcus",
+      "text": "Morning all -- standup notes are in the doc."
+     }
+    ]
+   }
+  }
+ },
+ "situation": "The Fernway 2.4 release note is finished -- it is in /notes/release-note.txt. Post its summary to the Blogger blog."
+}

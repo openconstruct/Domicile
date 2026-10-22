@@ -1,0 +1,5 @@
+Quillmark getting started.
+
+Install Quillmark, launch it, and create your first notebook. A notebook is a folder of markdown notes plus a small settings file; nothing is locked in a database.
+
+Write notes in the editor, link them with double brackets, and use the outline pane to jump between headings. Notebooks can live anywhere on disk, including inside a synced folder. When you are ready to keep two devices in step, read the sync guide; for fast hands, the keyboard shortcut list is worth an evening.

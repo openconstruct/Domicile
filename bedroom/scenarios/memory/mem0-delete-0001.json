@@ -1,0 +1,33 @@
+{
+  "id": "mem0-delete-0001",
+  "family": "mem0-delete",
+  "difficulty": 2,
+  "setup": {
+    "facts": [
+      "the operator's office is room 214",
+      "the operator's office is room 318"
+    ],
+    "show_listing": true
+  },
+  "situation": "The operator moved offices last month; the listing in your observation shows both the old and new room. Delete the stale memory (the old room, 214).",
+  "expected": {
+    "tool": "mcp__memory__memory_delete",
+    "args_match": {
+      "memory_id": {
+        "equals": "m-001"
+      }
+    },
+    "postconditions": [
+      {
+        "type": "store_not_contains",
+        "text": "room 214"
+      },
+      {
+        "type": "store_contains",
+        "text": "room 318"
+      }
+    ]
+  },
+  "notes": "Meditation in miniature: prune the contradicted fact, keep its replacement.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Holloway"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "eval-mem-search-010",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Selin's sister lives in Falkirk",
+   "answers email after 18:00",
+   "Selin lives in Holloway",
+   "Selin works in Falkirk"
+  ]
+ },
+ "situation": "Which city does Selin live in? Search long-term memory, then answer."
+}

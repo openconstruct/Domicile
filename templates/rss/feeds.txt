@@ -1,0 +1,6 @@
+# One feed URL per line. '#' starts a comment. Blank lines are ignored.
+# Starter list: edit freely. New items reach the agent about once an hour.
+https://export.arxiv.org/rss/cs.AI
+https://simonwillison.net/atom/everything/
+https://www.quantamagazine.org/feed/
+https://jvns.ca/atom.xml

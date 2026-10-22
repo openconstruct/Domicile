@@ -1,0 +1,33 @@
+{
+ "archetype": "fs-glob-list",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "/data/report-11.csv",
+   "/data/report-29.csv",
+   "/data/report-5.csv"
+  ],
+  "required_sequence": [
+   "Glob"
+  ]
+ },
+ "family": "fs",
+ "id": "train-fs-glob-list-040",
+ "max_turns": 6,
+ "notes": "Glob pattern discipline; .bak siblings and other extensions are bait.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/draft-10.txt": "contents of draft-10.txt\n",
+   "/data/draft-15.txt": "contents of draft-15.txt\n",
+   "/data/draft-18.txt": "contents of draft-18.txt\n",
+   "/data/notes-11.csv.bak": "contents of notes-11.csv.bak\n",
+   "/data/notes-9.csv.bak": "contents of notes-9.csv.bak\n",
+   "/data/report-11.csv": "contents of report-11.csv\n",
+   "/data/report-29.csv": "contents of report-29.csv\n",
+   "/data/report-5.csv": "contents of report-5.csv\n"
+  }
+ },
+ "situation": "List every file in /data whose name ends in .csv \u2014 full paths, one per line, nothing else in your answer."
+}

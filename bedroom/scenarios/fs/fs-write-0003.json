@@ -1,0 +1,28 @@
+{
+  "id": "fs-write-0003",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/drafts/post.txt": "old title\n"
+    }
+  },
+  "situation": "Overwrite /drafts/post.txt entirely with 'new title'.",
+  "expected": {
+    "tool": "Write",
+    "args_match": {
+      "path": {
+        "equals": "/drafts/post.txt"
+      },
+      "content": {
+        "equals": "new title"
+      }
+    },
+    "postcondition": {
+      "path": "/drafts/post.txt",
+      "not_contains": "old title"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Overwrite discrimination, inverse of the append case."
+}

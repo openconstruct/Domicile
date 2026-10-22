@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-add",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "text": "Iris reviews Dunmore deploys every Thursday",
+    "type": "store_contains"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_add"
+  ]
+ },
+ "family": "memory",
+ "id": "dev-mem-add-001",
+ "max_turns": 6,
+ "notes": "The fact must land in the store verbatim enough to match; narrating it earns 0.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "answers email after 18:00"
+  ]
+ },
+ "situation": "Remember this for later: Iris reviews Dunmore deploys every Thursday. Store it in long-term memory."
+}

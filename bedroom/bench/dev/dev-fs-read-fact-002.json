@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "7832"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-read-fact-002",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/dunmore-ops.txt": "Dunmore operations.\nThe admin port for Dunmore is 7832.\nNightly jobs run at 02:00.\n",
+   "/notes/kelvin-ops.txt": "Kelvin operations.\nThe admin port for Kelvin is 7849.\nNightly jobs run at 03:00.\n"
+  }
+ },
+ "situation": "What is the admin port for Dunmore? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

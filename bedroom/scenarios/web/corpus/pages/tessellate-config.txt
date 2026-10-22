@@ -1,0 +1,11 @@
+Tessellate configuration reference.
+
+All configuration lives in tessellate.toml at the project root.
+
+site_title: the site's name, used in templates and feeds.
+theme: the theme directory to build with.
+output_dir: where the built site goes (default "public").
+preview_port: the port for the local preview server (default 4317).
+drafts: when true, draft pages are included in the build.
+
+Unknown keys are ignored with a warning. Relative paths are resolved from the project root, never from the current directory.

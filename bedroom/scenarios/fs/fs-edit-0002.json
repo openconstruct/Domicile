@@ -1,0 +1,35 @@
+{
+  "id": "fs-edit-0002",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/cfg/app.txt": "host=old.example\nport=8080\n"
+    }
+  },
+  "situation": "In /cfg/app.txt replace old.example with new.example, leave the port alone.",
+  "expected": {
+    "tool": "Edit",
+    "args_match": {
+      "path": {
+        "equals": "/cfg/app.txt"
+      },
+      "old": {
+        "contains": [
+          "old.example"
+        ]
+      },
+      "new": {
+        "contains": [
+          "new.example"
+        ]
+      }
+    },
+    "postcondition": {
+      "path": "/cfg/app.txt",
+      "contains": "port=8080"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Edit one token; postcondition guards the untouched line."
+}

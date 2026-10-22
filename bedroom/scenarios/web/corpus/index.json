@@ -1,0 +1,98 @@
+[
+ {
+  "url": "https://docs.tessellate.example/",
+  "title": "Tessellate documentation home",
+  "snippet": "Documentation for Tessellate, the static site generator: configuration, themes, content, and the preview server.",
+  "file": "tessellate-home.txt"
+ },
+ {
+  "url": "https://docs.tessellate.example/config",
+  "title": "Tessellate configuration reference",
+  "snippet": "Every tessellate.toml key explained: site title, theme, output directory, taxonomies, and preview options.",
+  "file": "tessellate-config.txt"
+ },
+ {
+  "url": "https://docs.tessellate.example/changelog",
+  "title": "Tessellate changelog",
+  "snippet": "Release history for Tessellate 2.x: theme engine fixes, faster builds, and preview server changes.",
+  "file": "tessellate-changelog.txt"
+ },
+ {
+  "url": "https://docs.tessellate.example/themes",
+  "title": "Tessellate theme reference",
+  "snippet": "How Tessellate themes work: templates, partials, asset pipelines, and theme settings.",
+  "file": "tessellate-themes.txt"
+ },
+ {
+  "url": "https://staticnotes.example/tessellate-themes",
+  "title": "Five Tessellate themes, compared",
+  "snippet": "A hands-on comparison of popular Tessellate themes for blogs, docs, and portfolios.",
+  "file": "tessellate-theme-blog.txt"
+ },
+ {
+  "url": "https://forum.tessellate.example/t/preview-port-in-use",
+  "title": "Preview server says port already in use - Tessellate forum",
+  "snippet": "My preview server will not start because the port is taken. How do I change the Tessellate preview port?",
+  "file": "tessellate-port-forum.txt"
+ },
+ {
+  "url": "https://docs.quillmark.example/start",
+  "title": "Quillmark getting started",
+  "snippet": "Install Quillmark, create a notebook, and write your first note with the markdown editor.",
+  "file": "quillmark-start.txt"
+ },
+ {
+  "url": "https://docs.quillmark.example/keys",
+  "title": "Quillmark keyboard shortcuts",
+  "snippet": "Every Quillmark shortcut: navigation, formatting, search, and window management.",
+  "file": "quillmark-keys.txt"
+ },
+ {
+  "url": "https://docs.parallaxdb.example/api",
+  "title": "ParallaxDB API reference",
+  "snippet": "The ParallaxDB embedded API: open, get, put, scan, and transaction calls with examples.",
+  "file": "parallaxdb-api.txt"
+ },
+ {
+  "url": "https://docs.parallaxdb.example/faq",
+  "title": "ParallaxDB frequently asked questions",
+  "snippet": "Answers about ParallaxDB storage, durability, backups, and single-file databases.",
+  "file": "parallaxdb-faq.txt"
+ },
+ {
+  "url": "https://docs.parallaxdb.example/releases",
+  "title": "ParallaxDB release notes",
+  "snippet": "ParallaxDB 1.x release notes: storage engine fixes, index improvements, and compatibility notes.",
+  "file": "parallaxdb-releases.txt"
+ },
+ {
+  "url": "https://docs.fernway.example/deploy",
+  "title": "Fernway deployment guide",
+  "snippet": "Deploy with Fernway: pipelines, environments, secrets, and rollback from the command line.",
+  "file": "fernway-deploy.txt"
+ },
+ {
+  "url": "https://docs.fernway.example/changelog",
+  "title": "Fernway changelog",
+  "snippet": "Fernway release history: pipeline changes, new commands, and deprecations.",
+  "file": "fernway-changelog.txt"
+ },
+ {
+  "url": "https://staticnotes.example/latticework-vs-fernway",
+  "title": "Latticework vs Fernway: task runners compared",
+  "snippet": "Comparing Latticework and Fernway for builds and deploys: configuration, parallelism, and ecosystem.",
+  "file": "latticework-vs-fernway.txt"
+ },
+ {
+  "url": "https://docs.meridian.example/export",
+  "title": "Exporting from Meridian Notes",
+  "snippet": "Export Meridian Notes notebooks to markdown, HTML, or a single archive file.",
+  "file": "meridian-export.txt"
+ },
+ {
+  "url": "https://staticnotes.example/static-generators-roundup",
+  "title": "Static site generators in 2026: a roundup",
+  "snippet": "Tessellate, classic generators, and two newcomers compared for blogs and documentation sites.",
+  "file": "static-generators-roundup.txt"
+ }
+]

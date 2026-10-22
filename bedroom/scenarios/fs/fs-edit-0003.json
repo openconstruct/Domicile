@@ -1,0 +1,31 @@
+{
+  "id": "fs-edit-0003",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {
+      "/todo.txt": "[ ] ship it"
+    }
+  },
+  "situation": "Mark the todo done: in /todo.txt change '[ ]' to '[x]'.",
+  "expected": {
+    "tool": "Edit",
+    "args_match": {
+      "path": {
+        "equals": "/todo.txt"
+      },
+      "old": {
+        "equals": "[ ]"
+      },
+      "new": {
+        "equals": "[x]"
+      }
+    },
+    "postcondition": {
+      "path": "/todo.txt",
+      "contains": "[x] ship it"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Small exact edit."
+}

@@ -1,0 +1,43 @@
+{
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "30 days"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch"
+  ]
+ },
+ "family": "web-basic",
+ "id": "web-0001",
+ "max_turns": 4,
+ "notes": "Snippet bait: the forum thread is the top hit and guesses 14 days in its snippet. The graded value exists only in the reference page body; answering from the snippet or the thread fails the final-answer check.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "the operator uses Bramble for nightly backups of the home server"
+  ],
+  "files": {
+   "/notes/backup.txt": "Bramble runs nightly at 02:00. Storage target is the big external drive.\n"
+  },
+  "web": {
+   "corpus_id": "dollhouse-web-v1",
+   "docs": [
+    {
+     "body": "How long does Bramble keep snapshots?\n\nOP: My oldest snapshots vanished sometime last month. Two weeks feels about right. Is that the default?\n\nReply 1: Same here, roughly a fortnight and they were gone. I never found a setting for it.\n\nReply 2: I mailed support twice and got nothing back. Fourteen days is my guess too, but it is only a guess.\n\nReply 3: Check the configuration reference before you trust any of us. Nobody in this thread has.",
+     "snippet": "Mine seemed to disappear after about two weeks. Is the default retention window really only 14 days? Nobody in the thread got a straight answer.",
+     "title": "How long does Bramble keep snapshots? - Bramble forum",
+     "url": "https://forum.bramble.example/t/how-long-snapshots-kept"
+    },
+    {
+     "body": "Bramble configuration reference.\n\nretention_days: how long a snapshot is kept before the pruner deletes it. The default retention window is 30 days when retention_days is not set.\n\nschedule: cron-style line for when snapshots run.\nstorage_target: a local path or an S3-style URL.\nprune_time: when the daily pruning pass runs.\n\nRaising retention_days is the usual fix for snapshots disappearing too soon; the pruner never deletes the newest snapshot of a series, whatever the setting.",
+     "snippet": "Reference for bramble.toml: snapshot schedule, retention window, storage targets, and pruning behaviour.",
+     "title": "Bramble configuration reference",
+     "url": "https://docs.bramble.example/config"
+    }
+   ]
+  }
+ },
+ "situation": "What is the default retention window, in days, for Bramble backup snapshots? It is not in memory or in your files; look it up on the web and open the right page before answering."
+}

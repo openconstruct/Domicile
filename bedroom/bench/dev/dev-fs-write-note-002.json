@@ -1,0 +1,26 @@
+{
+ "archetype": "fs-write-note",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/kelvin-access.txt",
+    "text": "Access code for the Kelvin lab, issued to Yusuf: 109-795\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Write"
+  ]
+ },
+ "family": "fs",
+ "id": "dev-fs-write-note-002",
+ "max_turns": 6,
+ "notes": "Verbatim write; the graded content is exact, punctuation included.",
+ "pool": "dev",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {}
+ },
+ "situation": "Write a new file at /notes/kelvin-access.txt containing exactly this line and nothing else: 'Access code for the Kelvin lab, issued to Yusuf: 109-795' followed by a newline."
+}

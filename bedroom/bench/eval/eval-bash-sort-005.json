@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-sort",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "Dmitri",
+   "Maren",
+   "Oleg",
+   "Tilda",
+   "Yuri"
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "eval-bash-sort-005",
+ "max_turns": 6,
+ "notes": "sort -u; uniq alone leaves non-adjacent duplicates in.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/data/crew.txt": "Oleg\nDmitri\nMaren\nDmitri\nYuri\nTilda\nMaren\nOleg\n"
+  }
+ },
+ "situation": "Give me the crew list from /data/crew.txt with duplicates removed, in alphabetical order \u2014 one name per line, nothing else in your answer."
+}

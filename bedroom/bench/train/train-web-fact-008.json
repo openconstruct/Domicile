@@ -1,0 +1,38 @@
+{
+ "archetype": "web-fact",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "123 days"
+  ],
+  "required_sequence": [
+   "WebSearch",
+   "WebFetch"
+  ]
+ },
+ "family": "web",
+ "id": "train-web-fact-008",
+ "max_turns": 6,
+ "notes": "Snippet bait: the forum thread guesses wrong in its snippet; the graded value exists only in the reference page body.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "web": {
+   "docs": [
+    {
+     "body": "What is the retention window?\n\nOP: Mine seems to be around 100 days. Is that the default?\n\nReply 1: Same here, roughly that. I never found a setting for it.\n\nReply 2: I mailed support twice and got nothing. 100 days is my guess too, only a guess.\n\nReply 3: Check the configuration reference before you trust any of us. Nobody here has.",
+     "snippet": "Mine looks like about 100 days. Is that the default? Nobody in the thread got a straight answer.",
+     "title": "What is the retention window? - Bramble forum",
+     "url": "https://forum.bramble.example/t/retention-window"
+    },
+    {
+     "body": "Bramble configuration reference.\n\nThe default retention window is 123 days when the setting is not configured.\n\nRaising it is the usual fix when the default feels too small; the reference is the only authoritative source.",
+     "snippet": "Reference for bramble.toml: schedules, limits, and defaults.",
+     "title": "Bramble configuration reference",
+     "url": "https://docs.bramble.example/config"
+    }
+   ]
+  }
+ },
+ "situation": "What is the default retention window for Bramble, in days? It is not in memory or in your files; look it up on the web and open the right page before answering."
+}

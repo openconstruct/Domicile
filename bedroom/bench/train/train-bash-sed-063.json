@@ -1,0 +1,28 @@
+{
+ "archetype": "bash-sed",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/release.txt",
+    "text": "Cobalt release checklist\n- build: CLOSED\n- smoke tests: CLOSED\n- changelog: done\n- announcement: CLOSED\nShip only when nothing is open.\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-sed-063",
+ "max_turns": 6,
+ "notes": "sed in place vs the overwrite bait; the lowercase form in the last line must survive.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/release.txt": "Cobalt release checklist\n- build: OPEN\n- smoke tests: OPEN\n- changelog: done\n- announcement: OPEN\nShip only when nothing is open.\n"
+  }
+ },
+ "situation": "In /notes/release.txt, change every OPEN to CLOSED, in place. Leave everything else in the file exactly as it is."
+}

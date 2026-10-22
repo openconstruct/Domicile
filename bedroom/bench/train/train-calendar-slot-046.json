@@ -1,0 +1,41 @@
+{
+ "archetype": "calendar-slot",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "start": "2026-11-21T10:30",
+    "title_contains": "Meridian planning",
+    "type": "calendar_event"
+   },
+   {
+    "start": "2026-11-21T09:00",
+    "title_contains": "Meridian planning",
+    "type": "calendar_no_event"
+   }
+  ],
+  "required_sequence": [
+   "calendar_list",
+   "calendar_create"
+  ]
+ },
+ "family": "social",
+ "id": "train-calendar-slot-046",
+ "max_turns": 6,
+ "notes": "The free slot is computed from the seeded blockers; booking a blocked candidate or a later free one both fail.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "calendar": [
+    {
+     "end": "2026-11-21T09:45",
+     "id": "evt-101",
+     "start": "2026-11-21T09:00",
+     "title": "Sextant sync"
+    }
+   ]
+  }
+ },
+ "situation": "Book 'Meridian planning' on 2026-11-21 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30. Check the calendar first; never double-book a slot."
+}

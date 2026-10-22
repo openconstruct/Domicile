@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "14 days",
+    "subject_contains": "Meridian",
+    "to_contains": "omar@corp.example",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-002",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/bramble-ops.txt": "Bramble ops notes.\nThe shipped default retention window for Bramble snapshots is 21 days.\n",
+   "/notes/meridian-ops.txt": "Meridian ops notes.\nThe shipped default retention window for Meridian snapshots is 14 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Meridian snapshots. What is it, in days?",
+     "from": "omar@corp.example",
+     "id": "msg-101",
+     "subject": "Meridian retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Bramble -- the shipped default retention window, in days? (Answer on the Bramble thread, not this one.)",
+     "from": "omar@corp.example",
+     "id": "msg-102",
+     "subject": "Bramble retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Omar emailed asking for the shipped default retention window for Meridian snapshots for the runbook. Find the email, check the ops notes, and reply to Omar with the window. Reply only to that email."
+}

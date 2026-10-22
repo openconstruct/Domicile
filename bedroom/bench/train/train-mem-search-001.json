@@ -1,0 +1,27 @@
+{
+ "archetype": "mem-search",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "Corvin"
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_search"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-search-001",
+ "max_turns": 6,
+ "notes": "Near distractors share the person and the city tokens; the graded fact is residence.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Jonas lives in Corvin",
+   "takes the 7:40 train",
+   "Jonas's sister lives in Eastvale",
+   "Jonas works in Eastvale"
+  ]
+ },
+ "situation": "Which city does Jonas live in? Search long-term memory, then answer."
+}

@@ -1,0 +1,47 @@
+{
+  "id": "mem2-chunk-0001",
+  "family": "mem2-chunk",
+  "difficulty": 2,
+  "setup": {
+    "chunks": [
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 0,
+        "date": "2026-09-02",
+        "text": "discussed the garden fence repair and the quote from the contractor"
+      },
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 1,
+        "date": "2026-09-02",
+        "text": "the contractor quote for the fence was 2400, permits discussed"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 0,
+        "date": "2026-10-01",
+        "text": "planned the winter greenhouse build, ordered glass panels"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 1,
+        "date": "2026-10-01",
+        "text": "greenhouse heating options compared, settled on the small electric unit"
+      }
+    ]
+  },
+  "situation": "A search result points at 2026-09-02.log chunk 1 for the fence quote details. Fetch that full chunk.",
+  "expected": {
+    "tool": "mcp__mem2__mem2_get_chunk",
+    "args_match": {
+      "source_file": {
+        "equals": "2026-09-02.log"
+      },
+      "chunk_index": {
+        "equals": "1"
+      }
+    }
+  },
+  "notes": "Exact chunk fetch by address; searching again instead of fetching fails.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

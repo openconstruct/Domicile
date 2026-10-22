@@ -1,0 +1,37 @@
+{
+ "archetype": "discord-post",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "channel": "ops",
+    "text_contains": "Fernway load tests passed; ship decision at standup",
+    "type": "discord_posted"
+   },
+   {
+    "channel": "general",
+    "text_contains": "Fernway load tests passed; ship decision at standup",
+    "type": "discord_not_posted"
+   }
+  ],
+  "required_sequence": [
+   "discord_post"
+  ]
+ },
+ "family": "social",
+ "id": "train-discord-post-002",
+ "max_turns": 6,
+ "notes": "Similar-name channel bait; the graded text must land in exactly the named channel.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "discord": {
+    "general": [],
+    "ops": [],
+    "random": []
+   }
+  }
+ },
+ "situation": "Post this update to #ops: 'Fernway load tests passed; ship decision at standup'. Post it exactly once, to that channel only."
+}

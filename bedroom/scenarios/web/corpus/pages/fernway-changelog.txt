@@ -1,0 +1,9 @@
+Fernway changelog.
+
+3.1: pipelines can run steps in parallel groups; `fernway status` shows the last five deploys.
+
+3.0: the deploy command was split from publish; old combined scripts still work with a deprecation warning.
+
+2.9: secrets files gained per-environment sections.
+
+2.8: rollback learned to restore configuration files as well as code.

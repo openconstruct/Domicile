@@ -1,0 +1,10 @@
+ParallaxDB API reference.
+
+open(path, options): opens or creates a single-file database. The page_size option is fixed at creation; the default page_size is 4096 bytes.
+
+get(key): returns the value for a key, or None.
+put(key, value): writes inside the current transaction, or its own if none is open.
+scan(prefix): iterates keys with a prefix, in sorted order.
+begin() / commit() / rollback(): explicit transactions; nested begins join the outer transaction.
+
+All calls raise ParallaxError on failure; nothing fails silently.

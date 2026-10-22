@@ -1,0 +1,40 @@
+{
+  "id": "mem2-dates-0001",
+  "family": "mem2-dates",
+  "difficulty": 1,
+  "setup": {
+    "chunks": [
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 0,
+        "date": "2026-09-02",
+        "text": "discussed the garden fence repair and the quote from the contractor"
+      },
+      {
+        "source_file": "2026-09-02.log",
+        "chunk_index": 1,
+        "date": "2026-09-02",
+        "text": "the contractor quote for the fence was 2400, permits discussed"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 0,
+        "date": "2026-10-01",
+        "text": "planned the winter greenhouse build, ordered glass panels"
+      },
+      {
+        "source_file": "2026-10-01.log",
+        "chunk_index": 1,
+        "date": "2026-10-01",
+        "text": "greenhouse heating options compared, settled on the small electric unit"
+      }
+    ]
+  },
+  "situation": "Which days do we have conversation logs for? List the dates.",
+  "expected": {
+    "tool": "mcp__mem2__mem2_list_dates",
+    "args_match": {}
+  },
+  "notes": "The list-dates tool exists for exactly this; searching is the wrong move.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

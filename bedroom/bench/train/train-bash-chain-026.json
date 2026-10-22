@@ -1,0 +1,33 @@
+{
+ "archetype": "bash-chain",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/archive/2023/field-log.txt",
+    "text": "Notes for 2023 (Sextant survey): customs house, lighthouse steps, harbor at dawn.\n",
+    "type": "file_equals"
+   },
+   {
+    "path": "/inbox/field-log.txt",
+    "type": "file_not_exists"
+   }
+  ],
+  "required_sequence": [
+   "Bash",
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-chain-026",
+ "max_turns": 6,
+ "notes": "Two-command chain: the mv cannot land until the mkdir exists.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/inbox/field-log.txt": "Notes for 2023 (Sextant survey): customs house, lighthouse steps, harbor at dawn.\n"
+  }
+ },
+ "situation": "Create the folder /archive/2023, then move /inbox/field-log.txt into it, keeping its name and contents. The file should not remain in /inbox."
+}

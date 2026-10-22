@@ -1,0 +1,34 @@
+{
+ "archetype": "mem-delete",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "text": "badge number",
+    "type": "store_not_contains"
+   },
+   {
+    "equals": 2,
+    "type": "store_count"
+   }
+  ],
+  "required_sequence": [
+   "mcp__memory__memory_delete"
+  ]
+ },
+ "family": "memory",
+ "id": "train-mem-delete-019",
+ "max_turns": 6,
+ "notes": "Delete exactly one targeted fact among keepers; the listing shows the ids.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "facts": [
+   "Marco works on the night shift",
+   "takes the 7:40 train",
+   "Marco's old badge number is 8088"
+  ],
+  "show_listing": true
+ },
+ "situation": "Marco's badge number is no longer valid and the stored fact about it should be removed from long-term memory. Delete exactly that one fact; keep everything else."
+}

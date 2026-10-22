@@ -1,0 +1,28 @@
+{
+  "id": "fs-write-0004",
+  "family": "fs",
+  "difficulty": 2,
+  "setup": {
+    "files": {}
+  },
+  "situation": "Create /notes/idea.txt containing 'solar dock'.",
+  "expected": {
+    "tool": "Write",
+    "args_match": {
+      "path": {
+        "equals": "/notes/idea.txt"
+      },
+      "content": {
+        "contains": [
+          "solar dock"
+        ]
+      }
+    },
+    "postcondition": {
+      "path": "/notes/idea.txt",
+      "contains": "solar dock"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Create-in-subdir; sandbox makes parent dirs."
+}

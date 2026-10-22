@@ -1,0 +1,57 @@
+{
+ "archetype": "mail-reply-two",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "21 days",
+    "to_contains": "tilda@office.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "body_contains": "2462",
+    "to_contains": "tilda@office.bench.test",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "generalization": true,
+ "id": "eval-mail-reply-two-005",
+ "max_turns": 6,
+ "notes": "GENERALIZATION: two-fact synthesis across two sources in one reply; train's reply archetype carries one fact.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/anywhere-ops.txt": "Anywhere ops notes.\nThe shipped default retention window for Anywhere snapshots is 21 days.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "For the Anywhere runbook I need two things: the default retention window and the deploy port. I have the port from the infra sheet; can you confirm the retention window from the ops notes?",
+     "from": "tilda@office.bench.test",
+     "id": "msg-301",
+     "subject": "Anywhere runbook facts"
+    },
+    {
+     "body": "The Anywhere deploy port is 2462. Update your sheets.",
+     "from": "infra@office.bench.test",
+     "id": "msg-302",
+     "subject": "Anywhere deploy port"
+    }
+   ]
+  }
+ },
+ "situation": "Tilda needs two facts for the Anywhere runbook: the retention window (from the ops notes) and the deploy port (from the infra email). Reply to Tilda with both facts."
+}

@@ -1,0 +1,24 @@
+{
+ "archetype": "fs-grep-count",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_exact_lines": [
+   "5"
+  ],
+  "required_sequence": [
+   "Grep"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-grep-count-005",
+ "max_turns": 6,
+ "notes": "Grep count mode vs eyeballing the file; the count is computed from the planted lines.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/antonia.log": "2026-10-20 INFO checkpoint saved\n2026-10-20 INFO checkpoint saved\n2026-10-16 SYNC antonia job finished rc=0\n2026-10-06 INFO queue drained\n2026-10-19 INFO checkpoint saved\n2026-10-09 WARN disk at 61 percent\n2026-10-01 SYNC antonia job finished rc=0\n2026-10-02 SYNC antonia job finished rc=0\n2026-10-05 INFO checkpoint saved\n2026-10-10 SYNC antonia job finished rc=0\n2026-10-21 SYNC antonia job finished rc=0\n"
+  }
+ },
+ "situation": "How many lines in /logs/antonia.log contain the word SYNC? Use search, then answer with just the number."
+}

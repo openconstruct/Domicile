@@ -1,0 +1,9 @@
+Preview server says port already in use.
+
+OP: When I run the preview server it exits with "port already in use". Something else on my machine is sitting on the default port. How do I change it?
+
+Reply 1: Set preview_port in tessellate.toml to something free. I use 8080 because my router admin page lives on the default.
+
+Reply 2: Also check nothing else is running a second copy of the preview server. Two of my "port conflicts" were just me, twice.
+
+Reply 3: On laptops the culprit is often a sleeping dev server from yesterday. Kill it or pick a new port; both work.

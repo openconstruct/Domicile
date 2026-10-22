@@ -1,0 +1,31 @@
+{
+  "id": "fs-edit-0004",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/v.txt": "version 1.0"
+    }
+  },
+  "situation": "Bump /v.txt from version 1.0 to version 1.1.",
+  "expected": {
+    "tool": "Edit",
+    "args_match": {
+      "path": {
+        "equals": "/v.txt"
+      },
+      "old": {
+        "equals": "1.0"
+      },
+      "new": {
+        "equals": "1.1"
+      }
+    },
+    "postcondition": {
+      "path": "/v.txt",
+      "contains": "version 1.1"
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Version bump edit."
+}

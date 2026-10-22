@@ -1,0 +1,15 @@
+# Memory subsystem interpreter. Can be the SAME venv as requirements.txt,
+# or a separate one at ~/.mem0-venv (cchat auto-detects either — see
+# mem0_python() in cchat.py).
+#
+#   python3 -m venv ~/.mem0-venv && ~/.mem0-venv/bin/pip install -r requirements-mem0.txt
+#
+# Inference runs locally and free: fastembed (bge-small-en-v1.5, ONNX/CPU)
+# for embeddings, no OpenAI key needed. Fact extraction goes through the
+# Claude Code CLI (mem0_claude_llm.py) or OpenRouter (mem0_or_llm.py).
+
+mem0ai
+qdrant-client
+fastembed
+
+python-dotenv           # shared .env credential loader

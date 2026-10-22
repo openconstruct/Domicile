@@ -1,0 +1,30 @@
+{
+ "archetype": "bash-append-two",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/logs/shift.txt",
+    "text": "06:00 shift opened\n12:00 midday check done\n21:45 tills counted\n23:00 doors locked\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Bash",
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "generalization": true,
+ "id": "eval-bash-append-two-005",
+ "max_turns": 6,
+ "notes": "GENERALIZATION: two ordered appends; train's append archetype adds one line.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/logs/shift.txt": "06:00 shift opened\n12:00 midday check done\n"
+  }
+ },
+ "situation": "Add two lines to the end of /logs/shift.txt, in this order: first '21:45 tills counted', then '23:00 doors locked'. The existing entries must stay exactly as they are."
+}

@@ -1,0 +1,33 @@
+{
+ "archetype": "bash-chain",
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/archive/2024/site-memo.txt",
+    "text": "Notes for 2024 (Tessellate survey): north pier, signal hill, customs house.\n",
+    "type": "file_equals"
+   },
+   {
+    "path": "/inbox/site-memo.txt",
+    "type": "file_not_exists"
+   }
+  ],
+  "required_sequence": [
+   "Bash",
+   "Bash"
+  ]
+ },
+ "family": "bash",
+ "id": "train-bash-chain-068",
+ "max_turns": 6,
+ "notes": "Two-command chain: the mv cannot land until the mkdir exists.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/inbox/site-memo.txt": "Notes for 2024 (Tessellate survey): north pier, signal hill, customs house.\n"
+  }
+ },
+ "situation": "Create the folder /archive/2024, then move /inbox/site-memo.txt into it, keeping its name and contents. The file should not remain in /inbox."
+}

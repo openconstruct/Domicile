@@ -1,0 +1,7 @@
+Fernway deployment guide.
+
+A Fernway pipeline is a list of steps in fernway.yaml: build, test, publish. Run one with `fernway deploy`, targeting an environment such as staging or production.
+
+Secrets are read from the environment or a secrets file that is never committed. Every deploy keeps the previous release on the server, so `fernway rollback` restores it in seconds.
+
+Fernway is deliberately boring: no agents on the server, no dashboard to babysit, just SSH and a log you can read.

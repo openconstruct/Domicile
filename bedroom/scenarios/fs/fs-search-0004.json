@@ -1,0 +1,26 @@
+{
+  "id": "fs-search-0004",
+  "family": "fs",
+  "difficulty": 3,
+  "setup": {
+    "files": {
+      "/d/1.txt": "alpha",
+      "/d/2.txt": "beta",
+      "/d/3.txt": "gamma needle"
+    }
+  },
+  "situation": "Search /d for 'needle'.",
+  "expected": {
+    "tool": "Grep",
+    "args_match": {
+      "pattern": {
+        "equals": "needle"
+      },
+      "output_mode": {
+        "equals": "files_with_matches"
+      }
+    }
+  },
+  "reward_rule": "tool exact + args_match pass = 1 else 0",
+  "notes": "Needle is content, not filename."
+}

@@ -1,0 +1,28 @@
+{
+ "archetype": "fs-edit-unique",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "path": "/notes/antonia-status.txt",
+    "text": "Antonia release status\ncurrent version: 6.3\nchannel: stable\nowner sign-off: pending\n",
+    "type": "file_equals"
+   }
+  ],
+  "required_sequence": [
+   "Edit"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-edit-unique-004",
+ "max_turns": 6,
+ "notes": "Surgical edit; a full rewrite that alters any other line fails file_equals.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/antonia-status.txt": "Antonia release status\ncurrent version: 8.8\nchannel: stable\nowner sign-off: pending\n"
+  }
+ },
+ "situation": "In /notes/antonia-status.txt, change the current version from 8.8 to 6.3. Change nothing else in the file."
+}

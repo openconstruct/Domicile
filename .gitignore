@@ -1,0 +1,13 @@
+# Everything personal lives in .env and data/. Nothing there is ever committed.
+.env
+.env-*
+*.key
+data/*
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+
+# Local neutrality-linter terms (never commit: real names/machines)
+banned_terms_local.txt

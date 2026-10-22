@@ -1,0 +1,5 @@
+Tessellate documentation home.
+
+Tessellate turns a folder of markdown into a static website. This documentation covers installation, the tessellate.toml configuration file, themes and templates, content organisation, and the built-in preview server.
+
+New here? Start with the configuration reference, then pick a theme. If the preview server misbehaves, the forum thread about ports is the community's favourite answer. Tessellate builds are fast, deterministic, and work fully offline once installed.

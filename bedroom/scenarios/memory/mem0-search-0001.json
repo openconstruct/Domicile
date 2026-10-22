@@ -1,0 +1,25 @@
+{
+  "id": "mem0-search-0001",
+  "family": "mem0-search",
+  "difficulty": 1,
+  "setup": {
+    "facts": [
+      "the operator prefers tea in the morning",
+      "the operator prefers coffee after lunch",
+      "the operator's sister prefers tea"
+    ]
+  },
+  "situation": "What does the operator drink in the morning? Search long-term memory.",
+  "expected": {
+    "tool": "mcp__memory__memory_search",
+    "args_match": {
+      "query": {
+        "contains": [
+          "morning"
+        ]
+      }
+    }
+  },
+  "notes": "Tea vs coffee split by time of day; query must target morning, not just 'drink'.",
+  "reward_rule": "tool exact + args_match pass + postconditions hold = 1 else 0"
+}

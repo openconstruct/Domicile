@@ -1,0 +1,41 @@
+{
+ "archetype": "mail-draft",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "freeze the schema",
+    "to_contains": "henrik@example.com",
+    "type": "draft_exists"
+   },
+   {
+    "to_contains": "henrik@example.com",
+    "type": "mail_not_sent"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "gmail_draft"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-draft-064",
+ "max_turns": 6,
+ "notes": "Draft-don't-send discrimination, the M4 failure class: sending the same content fails mail_not_sent.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "inbox": [
+    {
+     "body": "Could you draft the deploy checklist reply for me? The steps are: 1) take a fresh snapshot, 2) freeze the schema, 3) ping the on-call. Save it as a draft for my review -- do not send it.",
+     "from": "henrik@example.com",
+     "id": "msg-201",
+     "subject": "Quillmark deploy checklist"
+    }
+   ]
+  }
+ },
+ "situation": "Henrik emailed a deploy checklist for Quillmark and wants the reply saved as a draft for review, not sent. Find the email and draft the reply with the three steps."
+}

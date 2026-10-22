@@ -1,0 +1,57 @@
+{
+ "difficulty": 3,
+ "expected": {
+  "postconditions": [
+   {
+    "start": "2026-10-28T14:00",
+    "title_contains": "Tessellate design review",
+    "type": "calendar_event"
+   },
+   {
+    "start": "2026-10-27T14:00",
+    "title_contains": "Tessellate design review",
+    "type": "calendar_no_event"
+   }
+  ],
+  "required_sequence": [
+   "calendar_list",
+   "calendar_create"
+  ]
+ },
+ "family": "calendar",
+ "id": "calendar-0002",
+ "max_turns": 4,
+ "notes": "The requested slot is held by 'Design review prep - Tessellate team' -- similar name, different event; its title deliberately does not contain the graded title string, so the seeded blocker itself trips neither postcondition. Booking at the requested time anyway fails calendar_no_event; only applying the stated fallback (same time, next day) satisfies both checks at once.",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "calendar": [
+    {
+     "end": "2026-10-27T15:00",
+     "id": "evt-101",
+     "start": "2026-10-27T14:00",
+     "title": "Design review prep - Tessellate team"
+    },
+    {
+     "end": "2026-10-27T09:30",
+     "id": "evt-102",
+     "start": "2026-10-27T09:00",
+     "title": "Team standup"
+    },
+    {
+     "end": "2026-10-28T11:00",
+     "id": "evt-103",
+     "start": "2026-10-28T09:00",
+     "title": "Focus block"
+    },
+    {
+     "end": "2026-10-28T16:30",
+     "id": "evt-104",
+     "start": "2026-10-28T16:00",
+     "title": "1:1 with Priya"
+    }
+   ]
+  }
+ },
+ "situation": "Book 'Tessellate design review' on Tuesday 2026-10-27 at 14:00 for 45 minutes. If that exact slot is already taken, book the same time on the next day instead. Never double-book a slot."
+}

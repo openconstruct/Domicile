@@ -1,0 +1,25 @@
+{
+ "archetype": "fs-read-fact",
+ "difficulty": 1,
+ "expected": {
+  "final_answer_contains": [
+   "6762"
+  ],
+  "required_sequence": [
+   "Read"
+  ]
+ },
+ "family": "fs",
+ "id": "eval-fs-read-fact-002",
+ "max_turns": 6,
+ "notes": "Read the right ops file among a sibling project's; values differ.",
+ "pool": "eval",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/antonia-ops.txt": "Antonia operations.\nThe deploy port for Antonia is 6762.\nNightly jobs run at 02:00.\n",
+   "/notes/rurikdb-ops.txt": "RurikDB operations.\nThe deploy port for RurikDB is 6862.\nNightly jobs run at 03:00.\n"
+  }
+ },
+ "situation": "What is the deploy port for Antonia? The answer is in the operations notes. Read the right file, then answer with the port number."
+}

@@ -1,0 +1,53 @@
+{
+ "archetype": "mail-reply-fact",
+ "difficulty": 2,
+ "expected": {
+  "postconditions": [
+   {
+    "body_contains": "30 days",
+    "subject_contains": "Tessellate",
+    "to_contains": "henrik@example.com",
+    "type": "mail_sent"
+   },
+   {
+    "equals": 1,
+    "type": "mail_sent_count"
+   }
+  ],
+  "required_sequence": [
+   "gmail_search",
+   "gmail_read",
+   "Read",
+   "gmail_send"
+  ]
+ },
+ "family": "social",
+ "id": "train-mail-reply-fact-046",
+ "max_turns": 6,
+ "notes": "Distractor: a same-sender thread about the sibling project with a different window; exactly-once grading on the reply.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "files": {
+   "/notes/lattice-ops.txt": "Lattice ops notes.\nThe shipped default retention window for Lattice snapshots is 39 days.\n",
+   "/notes/tessellate-ops.txt": "Tessellate ops notes.\nThe shipped default retention window for Tessellate snapshots is 30 days when retention_days is not set.\n"
+  },
+  "social": {
+   "inbox": [
+    {
+     "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Tessellate snapshots. What is it, in days?",
+     "from": "henrik@example.com",
+     "id": "msg-101",
+     "subject": "Tessellate retention for the runbook"
+    },
+    {
+     "body": "Separate thread: same question for Lattice -- the shipped default retention window, in days? (Answer on the Lattice thread, not this one.)",
+     "from": "henrik@example.com",
+     "id": "msg-102",
+     "subject": "Lattice retention for the runbook"
+    }
+   ]
+  }
+ },
+ "situation": "Henrik emailed asking for the shipped default retention window for Tessellate snapshots for the runbook. Find the email, check the ops notes, and reply to Henrik with the window. Reply only to that email."
+}
