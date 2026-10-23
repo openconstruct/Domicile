@@ -244,5 +244,235 @@
    }
   },
   "type": "function"
+ },
+ {
+  "function": {
+   "description": "Search Gmail. Returns one block per message: id, date, sender, subject, then the snippet.",
+   "name": "GmailSearch",
+   "parameters": {
+    "properties": {
+     "max_results": {
+      "description": "Default 20, max 100",
+      "type": "integer"
+     },
+     "query": {
+      "description": "Gmail search syntax, e.g. is:unread or from:x newer_than:2d",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Read one email by id (from GmailSearch). Returns headers and the plain-text body.",
+   "name": "GmailRead",
+   "parameters": {
+    "properties": {
+     "id": {
+      "description": "Message id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Send a plain-text email. Needs the user's approval.",
+   "name": "GmailSend",
+   "parameters": {
+    "properties": {
+     "body": {
+      "type": "string"
+     },
+     "subject": {
+      "type": "string"
+     },
+     "thread_id": {
+      "description": "Reply within this thread",
+      "type": "string"
+     },
+     "to": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "to",
+     "subject",
+     "body"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Save a plain-text email as a draft instead of sending it. Nothing is delivered; a human reviews the draft and sends it. Use this when asked to draft something for review.",
+   "name": "GmailDraft",
+   "parameters": {
+    "properties": {
+     "body": {
+      "type": "string"
+     },
+     "subject": {
+      "type": "string"
+     },
+     "thread_id": {
+      "description": "Reply within this thread",
+      "type": "string"
+     },
+     "to": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "to",
+     "subject",
+     "body"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "List upcoming calendar events, soonest first: start, title, [location].",
+   "name": "CalendarList",
+   "parameters": {
+    "properties": {
+     "calendar_id": {
+      "description": "Default primary",
+      "type": "string"
+     },
+     "max_results": {
+      "description": "Default 10",
+      "type": "integer"
+     }
+    },
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Create a calendar event. Needs the user's approval.",
+   "name": "CalendarCreate",
+   "parameters": {
+    "properties": {
+     "calendar_id": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "end": {
+      "description": "RFC3339",
+      "type": "string"
+     },
+     "start": {
+      "description": "RFC3339, e.g. 2026-09-25T14:00:00-04:00",
+      "type": "string"
+     },
+     "summary": {
+      "description": "Event title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "summary",
+     "start",
+     "end"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Create a Blogger post (a draft unless draft is false). Needs the user's approval.",
+   "name": "BloggerPost",
+   "parameters": {
+    "properties": {
+     "content_html": {
+      "description": "Post body as HTML",
+      "type": "string"
+     },
+     "draft": {
+      "description": "Default true",
+      "type": "boolean"
+     },
+     "title": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "title",
+     "content_html"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Read recent Google Chat messages in a space, newest first.",
+   "name": "ChatRead",
+   "parameters": {
+    "properties": {
+     "page_size": {
+      "description": "Default 20",
+      "type": "integer"
+     },
+     "space": {
+      "description": "e.g. spaces/AAAA",
+      "type": "string"
+     }
+    },
+    "required": [
+     "space"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
+ },
+ {
+  "function": {
+   "description": "Post a message to a Google Chat space. Needs the user's approval.",
+   "name": "ChatSend",
+   "parameters": {
+    "properties": {
+     "space": {
+      "type": "string"
+     },
+     "text": {
+      "type": "string"
+     },
+     "thread": {
+      "description": "Thread name to reply in",
+      "type": "string"
+     }
+    },
+    "required": [
+     "space",
+     "text"
+    ],
+    "type": "object"
+   }
+  },
+  "type": "function"
  }
 ]

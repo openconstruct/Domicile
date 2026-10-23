@@ -1,0 +1,47 @@
+{
+ "archetype": "chat-read",
+ "difficulty": 2,
+ "expected": {
+  "final_answer_contains": [
+   "November 9"
+  ],
+  "required_sequence": [
+   "ChatRead"
+  ]
+ },
+ "family": "social",
+ "id": "train-chat-read-018",
+ "max_turns": 6,
+ "notes": "The decision sits mid-chatter; answering from memory or the newest message fails.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "spaces": {
+    "spaces/AAAAops": [
+     {
+      "createTime": "2026-10-29T14:02:00Z",
+      "sender": "kim",
+      "text": "any update on the Fernway freeze?"
+     },
+     {
+      "createTime": "2026-10-29T14:05:00Z",
+      "sender": "lee",
+      "text": "still deciding between two dates"
+     },
+     {
+      "createTime": "2026-10-29T14:09:00Z",
+      "sender": "ops-lead",
+      "text": "Decision: the Fernway deploy freeze starts November 9 and lifts on December 1."
+     },
+     {
+      "createTime": "2026-10-29T14:11:00Z",
+      "sender": "kim",
+      "text": "thanks, marking the calendar"
+     }
+    ]
+   }
+  }
+ },
+ "situation": "What did the team decide about the Fernway deploy freeze in spaces/AAAAops? Read the space and answer with the start date."
+}

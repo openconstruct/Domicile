@@ -20,7 +20,7 @@ chars/4 approximation. One-shot episodes with seeded state, as in M1;
 scenarios that need ids show a memory listing in the observation, the way
 a resident who just ran memory_list would see it.
 """
-import hashlib, json, math, re
+import difflib, hashlib, json, math, re
 from pathlib import Path
 
 from .core import Sandbox, run_fs_tool, validate
@@ -41,6 +41,11 @@ def _terms(s):
     return set(re.findall(r"[a-z0-9]+", s.lower()))
 
 
+def _hex8(n):
+    """Deterministic 8-char hex memory id, the shape memory_list prints."""
+    return f"{0xAEEF0000 + n:08x}"
+
+
 def _rank(query, texts, limit):
     q = _terms(query)
     scored = []
@@ -53,41 +58,93 @@ def _rank(query, texts, limit):
 
 
 class FactStore:
-    """Seeded mem0 stand-in: ordered facts with stable ids."""
+    """Seeded mem0 stand-in: ordered facts with stable 8-char hex ids.
+
+    Reply text mirrors the live server (captured 2026-10-22):
+      search        [0.867] 2026-10-22 <text>
+      list          <N> memories total, showing <K>:
+                    - 2026-10-22 (aeef9cb6) <text>
+      add extract   ADD: <stored fact>
+      add verbatim  stored verbatim: <first 100 chars>
+      delete        deleted: <first 80 chars>
+                    no memory with id starting '<id>'
+    """
+
+    ID_BASE = 0xAEEF_0000
 
     def __init__(self, facts=None):
-        self.facts = [{"id": f"m-{i + 1:03d}", "text": t} for i, t in enumerate(facts or [])]
-        self._next = len(self.facts) + 1
+        self.facts = []
+        for i, f in enumerate(facts or []):
+            if isinstance(f, dict):
+                self.facts.append({"id": _hex8(i), "date": f.get("date", ""),
+                                   "text": f.get("text", "")})
+            else:
+                self.facts.append({"id": _hex8(i), "date": "", "text": str(f)})
+        self._next = len(self.facts)
+
+    def _line(self, f):
+        return f"- {f['date']} ({f['id']}) {f['text']}" if f["date"] else \
+            f"- ({f['id']}) {f['text']}"
 
     def search(self, query, limit=5):
         idx = _rank(query, [f["text"] for f in self.facts], int(limit))
         if not idx:
             return "no memories found"
-        return "\n".join(f'{self.facts[i]["id"]}: {self.facts[i]["text"]}' for i in idx)
+        q = query.lower()
+        out = []
+        for i in idx:
+            f = self.facts[i]
+            sim = difflib.SequenceMatcher(None, q, f["text"].lower()).ratio()
+            head = f"[{sim:.3f}] {f['date']} {f['text']}" if f["date"] else f"[{sim:.3f}] {f['text']}"
+            out.append(head)
+        return "\n".join(out)
 
     def list(self, limit=20):
         rows = self.facts[-int(limit):][::-1]
-        return "\n".join(f'{f["id"]}: {f["text"]}' for f in rows) or "store is empty"
+        if not rows:
+            return "0 memories total"
+        return (f"{len(self.facts)} memories total, showing {len(rows)}:\n"
+                + "\n".join(self._line(f) for f in rows))
 
-    def add(self, text):
-        fid = f"m-{self._next:03d}"
+    def add(self, text, extract=True):
+        fid = _hex8(self._next)
         self._next += 1
-        self.facts.append({"id": fid, "text": text})
-        return f"stored {fid}"
+        self.facts.append({"id": fid, "date": "", "text": text})
+        if extract:
+            return f"ADD: {text}"
+        return f"stored verbatim: {text[:100]}"
 
     def delete(self, memory_id):
-        hits = [f for f in self.facts if f["id"] == memory_id or f["id"].startswith(memory_id)]
-        if len(hits) != 1:
-            return f"error: {'ambiguous id' if hits else 'no such memory'}"
+        mid = str(memory_id or "")
+        hits = [f for f in self.facts if f["id"] == mid or f["id"].startswith(mid)]
+        if not hits:
+            return f"no memory with id starting '{mid}'"
+        if len(hits) > 1:
+            raise ValueError(f"id prefix {mid!r} matches {len(hits)} memories; use more characters")
         self.facts.remove(hits[0])
-        return f'deleted {hits[0]["id"]}'
+        return f"deleted: {hits[0]['text'][:80]}"
 
 
 class TranscriptStore:
-    """Seeded mem2 stand-in: dated conversation chunks."""
+    """Seeded mem2 stand-in: dated conversation chunks.
+
+    Reply text mirrors the live server (captured 2026-10-22):
+      search      [1] via=sem+kw score=0.0350 date=2026-09-16 chat=Main Chat ref=/path.log#19
+                  <the chunk's log lines>
+      list_dates  2026-10-21  (86,985 bytes)
+      get_chunk   date: 2026-09-16
+                  chat: Main Chat
+                  ---
+                  <text>
+                  Chunk not found: /nonexistent.log#0
+    """
 
     def __init__(self, chunks=None):
-        self.chunks = chunks or []  # {source_file, chunk_index, date, text}
+        self.chunks = []
+        for c in chunks or []:
+            c = dict(c)
+            c.setdefault("chat", "Main Chat")
+            self.chunks.append(c)
 
     def search(self, query, limit=5, date_from=None, date_to=None):
         pool = [c for c in self.chunks
@@ -96,20 +153,30 @@ class TranscriptStore:
         idx = _rank(query, [c["text"] for c in pool], int(limit))
         if not idx:
             return "no conversations found"
+        q = query.lower()
         out = []
-        for i in idx:
+        for n, i in enumerate(idx, 1):
             c = pool[i]
-            out.append(f'{c["source_file"]}#{c["chunk_index"]} ({c["date"]}): {c["text"][:80]}')
-        return "\n".join(out)
+            sim = difflib.SequenceMatcher(None, q, c["text"].lower()).ratio()
+            out.append(f"[{n}] via=sem+kw score={sim:.4f} date={c['date']} chat={c['chat']} "
+                       f"ref={c['source_file']}#{c['chunk_index']}\n{c['text']}")
+        return "\n\n".join(out)
 
     def list_dates(self):
-        return "\n".join(sorted({c["date"] for c in self.chunks})) or "no logs"
+        dates = sorted({c["date"] for c in self.chunks})
+        if not dates:
+            return "no logs"
+        out = []
+        for d in dates:
+            size = sum(len(c["text"]) for c in self.chunks if c["date"] == d)
+            out.append(f"{d}  ({size:,} bytes)")
+        return "\n".join(out)
 
     def get_chunk(self, source_file, chunk_index):
         for c in self.chunks:
             if c["source_file"] == source_file and c["chunk_index"] == int(chunk_index):
-                return c["text"]
-        return "error: no such chunk"
+                return f"date: {c['date']}\nchat: {c['chat']}\n---\n{c['text']}"
+        return f"Chunk not found: {source_file}#{chunk_index}"
 
 
 def run_memory_tool(store, tstore, sb, tool, args):
@@ -117,7 +184,7 @@ def run_memory_tool(store, tstore, sb, tool, args):
     if name == "memory_search":
         return store.search(args["query"], args.get("limit", 5))
     if name == "memory_add":
-        return store.add(args["text"])
+        return store.add(args["text"], args.get("extract", True))
     if name == "memory_list":
         return store.list(args.get("limit", 20))
     if name == "memory_delete":
@@ -164,6 +231,15 @@ def run_episode_mem(scenario, student_fn, trace_path=None):
     store = FactStore(setup.get("facts"))
     tstore = TranscriptStore(setup.get("chunks"))
     sb = Sandbox(setup.get("files"))
+    # mem1 files are always in context in the house -- identity/user/practices/
+    # goals/open/reflections are injected every session -- so the resident has
+    # effectively read them already. Marking them read here satisfies the real
+    # read-before-edit rule instead of training around it.
+    from .render import _mark_read
+    for rel in (setup.get("files") or {}):
+        p = sb.resolve(rel)
+        if p.exists():
+            _mark_read(sb, p)
     obs = {"situation": scenario["situation"], "scenario_id": scenario["id"],
            "tools": MEMORY_TOOLS + ["Read", "Write", "Edit"],
            "files_root": "/"}

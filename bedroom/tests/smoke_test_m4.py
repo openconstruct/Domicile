@@ -11,16 +11,17 @@ from bedroom.multi import load_multi_dir, run_eval_multi
 base = __file__.rsplit("/tests/", 1)[0]
 scenarios = load_multi_dir(base + "/scenarios/social")
 
-GS = "gmail_search"
-GR = "gmail_read"
-GE = "gmail_send"
-GD = "gmail_draft"
-CL = "calendar_list"
-CC = "calendar_create"
-BP = "blogger_post"
-DR = "discord_read"
-DP = "discord_post"
+GS = "GmailSearch"
+GR = "GmailRead"
+GE = "GmailSend"
+GD = "GmailDraft"
+CL = "CalendarList"
+CC = "CalendarCreate"
+BP = "BloggerPost"
+DR = "ChatRead"
+DP = "ChatSend"
 MS = "mcp__memory__memory_search"
+OPS = "spaces/AAAAops"
 
 ORACLE = {
     "gmail-0001": [
@@ -42,33 +43,34 @@ ORACLE = {
     ],
     "calendar-0001": [
         {"tool": CL, "args": {}},
-        {"tool": CC, "args": {"title": "Quillmark sync", "start": "2026-10-23T12:30",
-                              "end": "2026-10-23T13:15"}},
+        {"tool": CC, "args": {"summary": "Quillmark sync", "start": "2026-10-23T12:30:00-04:00",
+                              "end": "2026-10-23T13:15:00-04:00"}},
         {"text": "Booked Quillmark sync for Friday 12:30-13:15."},
     ],
     "calendar-0002": [
         {"tool": CL, "args": {}},
-        {"tool": CC, "args": {"title": "Tessellate design review", "start": "2026-10-28T14:00",
-                              "end": "2026-10-28T14:45"}},
+        {"tool": CC, "args": {"summary": "Tessellate design review",
+                              "start": "2026-10-28T14:00:00-04:00",
+                              "end": "2026-10-28T14:45:00-04:00"}},
         {"text": "Tuesday 14:00 was taken, so I booked Wednesday 14:00 instead."},
     ],
     "blogger-0001": [
         {"tool": "Read", "args": {"path": "/notes/release-note.txt"}},
-        {"tool": BP, "args": {"title": "Fernway 2.4 release",
-                              "body": "Fernway 2.4 is out: it adds offline mode for field crews and cuts sync time in half."}},
-        {"text": "Posted the release summary to Blogger."},
+        {"tool": BP, "args": {"title": "Fernway 2.4 release", "draft": False,
+                              "content_html": "Fernway 2.4 is out: it adds offline mode for field crews and cuts sync time in half."}},
+        {"text": "Published the release summary to Blogger."},
     ],
     "discord-0001": [
-        {"tool": DP, "args": {"channel": "standup",
+        {"tool": DP, "args": {"space": "spaces/AAAAstandup",
                               "text": "Standup: API migration merged; snapshot pruner still blocked on review."}},
-        {"text": "Posted to #standup."},
+        {"text": "Posted to the standup space."},
     ],
     "discord-0002": [
-        {"tool": DR, "args": {"channel": "ops"}},
+        {"tool": DR, "args": {"space": OPS}},
         {"text": "The team decided the deploy freeze starts November 2 and lifts on November 9."},
     ],
     "chain-0001": [
-        {"tool": DR, "args": {"channel": "ops"}},
+        {"tool": DR, "args": {"space": OPS}},
         {"tool": GE, "args": {"to": "operator@example.com",
                               "subject": "Tonight's deploy window",
                               "body": "Tonight's Fernway deploy window is 23:00 to 23:45 UTC."}},
@@ -83,13 +85,15 @@ ONESHOT = {
     "gmail-0002": {"tool": GE, "args": {"to": "dana@fernway.example",
                                        "subject": "Fernway deploy checklist",
                                        "body": "Checklist: smoke tests, fresh snapshot, rollback note."}},
-    "calendar-0001": {"tool": CC, "args": {"title": "Quillmark sync", "start": "2026-10-23T09:00",
-                                           "end": "2026-10-23T09:45"}},
-    "calendar-0002": {"tool": CC, "args": {"title": "Tessellate design review",
-                                           "start": "2026-10-27T14:00", "end": "2026-10-27T14:45"}},
-    "blogger-0001": {"tool": BP, "args": {"title": "Fernway 2.4 release",
-                                         "body": "Fernway 2.4 is out now."}},
-    "discord-0001": {"tool": DP, "args": {"channel": "general",
+    "calendar-0001": {"tool": CC, "args": {"summary": "Quillmark sync",
+                                           "start": "2026-10-23T09:00:00-04:00",
+                                           "end": "2026-10-23T09:45:00-04:00"}},
+    "calendar-0002": {"tool": CC, "args": {"summary": "Tessellate design review",
+                                           "start": "2026-10-27T14:00:00-04:00",
+                                           "end": "2026-10-27T14:45:00-04:00"}},
+    "blogger-0001": {"tool": BP, "args": {"title": "Fernway 2.4 release", "draft": False,
+                                         "content_html": "Fernway 2.4 is out now."}},
+    "discord-0001": {"tool": DP, "args": {"space": "spaces/AAAAgeneral",
                                          "text": "Standup: API migration merged; snapshot pruner still blocked on review."}},
     "discord-0002": {"tool": MS, "args": {"query": "deploy freeze decision"}},
     "chain-0001": {"tool": GE, "args": {"to": "operator@example.com",
@@ -117,36 +121,37 @@ SLOPPY = {
     ],
     "calendar-0001": [  # books over the design review instead of the real gap
         {"tool": CL, "args": {}},
-        {"tool": CC, "args": {"title": "Quillmark sync", "start": "2026-10-23T14:00",
-                              "end": "2026-10-23T14:45"}},
+        {"tool": CC, "args": {"summary": "Quillmark sync", "start": "2026-10-23T14:00:00-04:00",
+                              "end": "2026-10-23T14:45:00-04:00"}},
         {"text": "Booked for Friday afternoon."},
     ],
     "calendar-0002": [  # double-books the requested slot
         {"tool": CL, "args": {}},
-        {"tool": CC, "args": {"title": "Tessellate design review", "start": "2026-10-27T14:00",
-                              "end": "2026-10-27T14:45"}},
+        {"tool": CC, "args": {"summary": "Tessellate design review",
+                              "start": "2026-10-27T14:00:00-04:00",
+                              "end": "2026-10-27T14:45:00-04:00"}},
         {"text": "Booked Tuesday 14:00 as requested."},
     ],
-    "blogger-0001": [  # announces to Discord instead of posting to Blogger
+    "blogger-0001": [  # announces in chat instead of publishing to Blogger
         {"tool": "Read", "args": {"path": "/notes/release-note.txt"}},
-        {"tool": DP, "args": {"channel": "announcements",
+        {"tool": DP, "args": {"space": "spaces/AAAAannouncements",
                               "text": "Fernway 2.4 is out: it adds offline mode and cuts sync time in half."}},
         {"text": "Announced the release."},
     ],
-    "discord-0001": [  # right summary, wrong channel
-        {"tool": DP, "args": {"channel": "random",
+    "discord-0001": [  # right summary, wrong space
+        {"tool": DP, "args": {"space": "spaces/AAAArandom",
                               "text": "Standup: API migration merged; snapshot pruner still blocked on review."}},
         {"text": "Posted the standup summary."},
     ],
-    "discord-0002": [  # answers from the stale mem0 fact, never opens #ops
+    "discord-0002": [  # answers from the stale mem0 fact, never opens the space
         {"tool": MS, "args": {"query": "deploy freeze decision"}},
         {"text": "The team decided the deploy freeze lifts on October 30."},
     ],
-    "chain-0001": [  # does the read, then posts back to Discord instead of mailing
-        {"tool": DR, "args": {"channel": "ops"}},
-        {"tool": DP, "args": {"channel": "ops",
+    "chain-0001": [  # does the read, then posts back to chat instead of mailing
+        {"tool": DR, "args": {"space": OPS}},
+        {"tool": DP, "args": {"space": OPS,
                               "text": "Tonight's Fernway deploy window is 23:00 to 23:45 UTC."}},
-        {"text": "Shared tonight's window in #ops."},
+        {"text": "Shared tonight's window in the ops space."},
     ],
 }
 

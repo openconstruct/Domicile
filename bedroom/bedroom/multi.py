@@ -76,12 +76,16 @@ def _check_postconditions(store, sb, scenario, social=None):
         elif kind == "blog_posted":
             if not any(pc["body_contains"] in p.get("body", "") for p in social.blog):
                 return False
-        elif kind == "discord_posted":
-            msgs = social.discord.get(pc["channel"].lstrip("#"), [])
+        elif kind == "blog_live":
+            if not any(pc["body_contains"] in p.get("body", "") and p.get("status") == "live"
+                       for p in social.blog):
+                return False
+        elif kind == "chat_posted":
+            msgs = social.spaces.get(pc["space"], [])
             if not any(pc["text_contains"] in m.get("text", "") for m in msgs):
                 return False
-        elif kind == "discord_not_posted":
-            msgs = social.discord.get(pc["channel"].lstrip("#"), [])
+        elif kind == "chat_not_posted":
+            msgs = social.spaces.get(pc["space"], [])
             if any(pc["text_contains"] in m.get("text", "") for m in msgs):
                 return False
         elif kind == "store_contains":

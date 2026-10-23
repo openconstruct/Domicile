@@ -144,5 +144,29 @@ class WriteTools(unittest.TestCase):
             self.assertEqual(run("ChatRead", {"space": "spaces/A"}), "T  Jerry (HUMAN): hi")
 
 
+class DraftTool(unittest.TestCase):
+    """GmailDraft writes but delivers nothing, so it is deliberately ungated."""
+
+    def tearDown(self):
+        GT.set_approver(None)
+
+    def test_no_approver_needed_and_nothing_sent(self):
+        sent, drafted = [], []
+        gm = fake_module("gmail_client",
+                         send_message=lambda *a: sent.append(a) or {"id": "s"},
+                         create_draft=lambda to, sub, body, th: drafted.append((to, sub, body, th))
+                         or {"id": "d1"})
+        with patch.dict(sys.modules, {"gmail_client": gm}):
+            out = run("GmailDraft", {"to": "a@x", "subject": "Re: s", "body": "b"})
+        self.assertEqual(out, "tool=GmailDraft; to=a@x; id=d1")
+        self.assertEqual(drafted, [("a@x", "Re: s", "b", None)])
+        self.assertEqual(sent, [])
+
+    def test_missing_recipient_is_error_text(self):
+        with patch.dict(sys.modules, {"gmail_client": fake_module("gmail_client")}):
+            self.assertEqual(run("GmailDraft", {"subject": "s", "body": "b"}),
+                             "ERROR: ValueError: to is required")
+
+
 if __name__ == "__main__":
     unittest.main()

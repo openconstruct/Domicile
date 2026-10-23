@@ -4,24 +4,24 @@
  "expected": {
   "postconditions": [
    {
-    "start": "2026-11-23T09:00",
+    "start": "2026-11-23T09:00:00-04:00",
     "title_contains": "Tessellate planning",
     "type": "calendar_event"
    },
    {
-    "start": "2026-11-23T13:00",
+    "start": "2026-11-23T13:00:00-04:00",
     "title_contains": "Tessellate planning",
     "type": "calendar_no_event"
    },
    {
-    "start": "2026-11-23T15:30",
+    "start": "2026-11-23T15:30:00-04:00",
     "title_contains": "Tessellate planning",
     "type": "calendar_no_event"
    }
   ],
   "required_sequence": [
-   "calendar_list",
-   "calendar_create"
+   "CalendarList",
+   "CalendarCreate"
   ]
  },
  "family": "social",
@@ -34,19 +34,19 @@
   "social": {
    "calendar": [
     {
-     "end": "2026-11-23T13:45",
+     "end": "2026-11-23T13:45:00-04:00",
      "id": "evt-101",
-     "start": "2026-11-23T13:00",
+     "start": "2026-11-23T13:00:00-04:00",
      "title": "Fernway sync"
     },
     {
-     "end": "2026-11-23T16:15",
+     "end": "2026-11-23T16:15:00-04:00",
      "id": "evt-102",
-     "start": "2026-11-23T15:30",
+     "start": "2026-11-23T15:30:00-04:00",
      "title": "Lattice sync"
     }
    ]
   }
  },
- "situation": "Book 'Tessellate planning' on 2026-11-23 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30. Check the calendar first; never double-book a slot."
+ "situation": "Book 'Tessellate planning' on 2026-11-23 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30 (Eastern). Check the calendar first; never double-book a slot."
 }

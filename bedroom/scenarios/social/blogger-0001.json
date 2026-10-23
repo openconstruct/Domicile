@@ -4,12 +4,12 @@
   "postconditions": [
    {
     "body_contains": "offline mode",
-    "type": "blog_posted"
+    "type": "blog_live"
    }
   ],
   "required_sequence": [
    "Read",
-   "blogger_post"
+   "BloggerPost"
   ]
  },
  "family": "blogger",
@@ -22,16 +22,20 @@
    "/notes/release-note.txt": "Fernway 2.4 -- release notes (final).\n\nHeadline changes: offline mode for field crews, sync time cut in half, and a fix for the snapshot pruner race.\nSummary line: Fernway 2.4 adds offline mode and cuts sync time in half.\n"
   },
   "social": {
-   "discord": {
-    "announcements": [
+   "spaces": {
+    "spaces/AAAAannouncements": [
      {
-      "author": "Dana",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Dana",
+      "sender_type": "HUMAN",
       "text": "Reminder: freeze planning starts next week."
      }
     ],
-    "general": [
+    "spaces/AAAAgeneral": [
      {
-      "author": "Marcus",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Marcus",
+      "sender_type": "HUMAN",
       "text": "Morning all -- standup notes are in the doc."
      }
     ]

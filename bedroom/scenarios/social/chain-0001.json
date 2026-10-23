@@ -9,8 +9,8 @@
    }
   ],
   "required_sequence": [
-   "discord_read",
-   "gmail_send"
+   "ChatRead",
+   "GmailSend"
   ]
  },
  "family": "social-chain",
@@ -20,24 +20,32 @@
  "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
  "setup": {
   "social": {
-   "discord": {
-    "general": [
+   "spaces": {
+    "spaces/AAAAgeneral": [
      {
-      "author": "Tomas",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Tomas",
+      "sender_type": "HUMAN",
       "text": "Deploy night again -- coffee is on."
      }
     ],
-    "ops": [
+    "spaces/AAAAops": [
      {
-      "author": "Marcus",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Marcus",
+      "sender_type": "HUMAN",
       "text": "Last Tuesday's window was 21:00 to 21:30 UTC -- short one."
      },
      {
-      "author": "Priya",
+      "createTime": "2026-10-29T14:01:00Z",
+      "sender": "Priya",
+      "sender_type": "HUMAN",
       "text": "Reminder: the freeze starts Nov 2, get your deploys in this week."
      },
      {
-      "author": "Dana",
+      "createTime": "2026-10-29T14:02:00Z",
+      "sender": "Dana",
+      "sender_type": "HUMAN",
       "text": "Tonight's Fernway deploy window is 23:00 to 23:45 UTC. Only Fernway deploys tonight."
      }
     ]

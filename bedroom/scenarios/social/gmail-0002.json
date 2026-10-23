@@ -16,9 +16,9 @@
    }
   ],
   "required_sequence": [
-   "gmail_search",
-   "gmail_read",
-   "gmail_draft"
+   "GmailSearch",
+   "GmailRead",
+   "GmailDraft"
   ]
  },
  "family": "gmail",

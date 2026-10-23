@@ -135,13 +135,13 @@ def check_exactly_once():
         "situation": "Reply to the operator once.",
         "setup": {"social": {"inbox": [
             {"id": "m1", "from": "op@example.com", "subject": "Window?", "body": "When?"}]}},
-        "expected": {"required_sequence": ["gmail_send"],
+        "expected": {"required_sequence": ["GmailSend"],
                      "postconditions": [{"type": "mail_sent_count", "equals": 1,
                                          "to_contains": "op@example.com",
                                          "body_contains": "23:00"}]},
     }
-    send = {"tool": "gmail_send", "args": {"to": "op@example.com", "subject": "Re: Window?",
-                                           "body": "The window is 23:00 UTC."}}
+    send = {"tool": "GmailSend", "args": {"to": "op@example.com", "subject": "Re: Window?",
+                                          "body": "The window is 23:00 UTC."}}
     once = lambda obs: [send, {"text": "Sent."}][obs["turn"]]
     twice = lambda obs: [send, send, {"text": "Sent."}][obs["turn"]]
     assert run_episode_multi(scenario, once)["reward"] == 1

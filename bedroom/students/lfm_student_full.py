@@ -28,18 +28,6 @@ TOOLS = _DOMICILE + [
     fn("mcp__mem2__mem2_list_dates", "List the dates that have conversation logs.", {}, []),
     fn("mcp__mem2__mem2_get_chunk", "Read one conversation chunk in full.",
        {"source_file": S, "chunk_index": {"type": "integer"}}, ["source_file", "chunk_index"]),
-    fn("gmail_search", "Search the inbox. Returns message blocks with ids, senders, subjects and snippets.",
-       {"query": S, "count": {"type": "integer"}}, ["query"]),
-    fn("gmail_read", "Read one inbox message in full, by its id.", {"id": S}, ["id"]),
-    fn("gmail_send", "Send an email.", {"to": S, "subject": S, "body": S}, ["to", "subject", "body"]),
-    fn("gmail_draft", "Save an email as a draft for review instead of sending it.",
-       {"to": S, "subject": S, "body": S}, ["to", "subject", "body"]),
-    fn("calendar_list", "List calendar events with ids, titles and start/end times.", {}, []),
-    fn("calendar_create", "Create a calendar event. Start and end are ISO strings like 2026-10-23T12:30.",
-       {"title": S, "start": S, "end": S}, ["title", "start", "end"]),
-    fn("blogger_post", "Publish a post to the Blogger blog.", {"title": S, "body": S}, ["title", "body"]),
-    fn("discord_read", "Read recent messages from a Discord channel.", {"channel": S, "limit": {"type": "integer"}}, ["channel"]),
-    fn("discord_post", "Post a message to a Discord channel.", {"channel": S, "text": S}, ["channel", "text"]),
 ]
 
 def lfm_student_full(obs):

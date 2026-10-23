@@ -5,10 +5,10 @@
    "November 9"
   ],
   "required_sequence": [
-   "discord_read"
+   "ChatRead"
   ]
  },
- "family": "discord",
+ "family": "chat",
  "id": "discord-0002",
  "max_turns": 3,
  "notes": "mem0 holds the stale October 30 date -- the original proposal, which the channel history explicitly supersedes ('October 30 is off the table') before Dana's final decision. Answering from memory gives the wrong date and also fails the required sequence; the graded string 'November 9' appears only in the final ops message, so only reading the channel can produce it.",
@@ -18,24 +18,32 @@
    "the team decided the deploy freeze lifts on October 30"
   ],
   "social": {
-   "discord": {
-    "general": [
+   "spaces": {
+    "spaces/AAAAgeneral": [
      {
-      "author": "Tomas",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Tomas",
+      "sender_type": "HUMAN",
       "text": "Anyone else seeing slow snapshot pruning today?"
      }
     ],
-    "ops": [
+    "spaces/AAAAops": [
      {
-      "author": "Priya",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Priya",
+      "sender_type": "HUMAN",
       "text": "Freeze planning: my proposal is the freeze starts Nov 2 and lifts October 30 if the exporter lands early."
      },
      {
-      "author": "Marcus",
+      "createTime": "2026-10-29T14:01:00Z",
+      "sender": "Marcus",
+      "sender_type": "HUMAN",
       "text": "Exporter is not landing early, sadly. October 30 is off the table."
      },
      {
-      "author": "Dana",
+      "createTime": "2026-10-29T14:02:00Z",
+      "sender": "Dana",
+      "sender_type": "HUMAN",
       "text": "Final decision: deploy freeze starts Monday November 2 and lifts on November 9. No exceptions without my sign-off."
      }
     ]

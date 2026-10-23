@@ -5,18 +5,18 @@
   "postconditions": [
    {
     "body_contains": "Tessellate 4.7 is out: it adds per-project webhooks and halves storage use.",
-    "type": "blog_posted"
+    "type": "blog_live"
    }
   ],
   "required_sequence": [
    "Read",
-   "blogger_post"
+   "BloggerPost"
   ]
  },
  "family": "social",
  "id": "train-blogger-note-019",
  "max_turns": 6,
- "notes": "The key line must be lifted from the note, not improvised; announcing in chat earns 0.",
+ "notes": "BloggerPost drafts by default, so the draft flag must be cleared; the key line must be lifted from the note, not improvised.",
  "pool": "train",
  "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
  "setup": {
@@ -24,5 +24,5 @@
    "/notes/release-note.txt": "Release note draft -- Tessellate 4.7\nTessellate 4.7 is out: it adds per-project webhooks and halves storage use.\nThanks to everyone who tested.\n"
   }
  },
- "situation": "Publish the Tessellate 4.7 release summary from /notes/release-note.txt to the blog. The post body must include the summary line from the note."
+ "situation": "Publish the Tessellate 4.7 release summary from /notes/release-note.txt to the blog, live (not as a draft). The post body must include the summary line from the note."
 }

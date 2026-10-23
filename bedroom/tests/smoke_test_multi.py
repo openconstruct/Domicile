@@ -18,7 +18,7 @@ ORACLE = {
     "multi-route-0001": [
         {"tool": MS, "args": {"query": "operator home address"}},
         {"tool": M2S, "args": {"query": "moved new address"}},
-        {"tool": MDEL, "args": {"memory_id": "m-001"}},
+        {"tool": MDEL, "args": {"memory_id": "aeef0000"}},
         {"tool": MADD, "args": {"text": "the operator lives at 88 Harbor Lane"}},
         {"text": "The current address is 88 Harbor Lane."},
     ],
@@ -31,7 +31,7 @@ ORACLE = {
     "multi-route-0003": [
         {"tool": MS, "args": {"query": "morning drink"}},
         {"tool": M2S, "args": {"query": "morning tea coffee settled"}},
-        {"tool": MDEL, "args": {"memory_id": "m-002"}},
+        {"tool": MDEL, "args": {"memory_id": "aeef0001"}},
         {"text": "The operator drinks tea in the morning."},
     ],
     "multi-route-0004": [

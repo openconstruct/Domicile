@@ -231,9 +231,15 @@ chat: Main Chat
 Chunk not found: /nonexistent.log#0
 ```
 
-**Bedroom gap:** its memory dollhouse returns simplified strings and one-line tool
-descriptions. Until it is re-shaped to the formats above and fed the real docstrings,
-memory scenarios are not contract-faithful.
+**Bedroom status:** `bedroom/memory.py` now emits the formats above — `[sim] date text`
+for search, `N memories total, showing K:` plus `- date (id8) text` for list, `ADD:` /
+`stored verbatim:` for add, `deleted:` / `no memory with id starting` for delete, and
+the `via=sem+kw score= date= chat= ref=` header plus `date:/chat:/---` body for mem2.
+Memory ids are 8-char hex, matching what `memory_list` prints and `memory_delete` takes.
+
+Remaining gap: the memory tools are still *described* to the student with the short
+one-line stubs in `students/*.py`, not the real MCP docstrings. The result shapes are
+faithful; the descriptions are not.
 
 ---
 
@@ -259,6 +265,7 @@ Declined: `DENIED: GmailSend was not approved.` Blogger posts default to a draft
 | `GmailSearch` | `query`, `max_results` (20, max 100) | one block per message: `<id>  <date>  <from>  <subject>` then `    <snippet>`; or `(no matches)` | none |
 | `GmailRead` | `id`* | `From: ..\nTo: ..\nSubject: ..\nDate: ..\n\n<body>` | none |
 | `GmailSend` | `to`* `subject`* `body`* `thread_id` | `tool=GmailSend; to=<addr>; id=<message id>` | approve |
+| `GmailDraft` | `to`* `subject`* `body`* `thread_id` | `tool=GmailDraft; to=<addr>; id=<draft id>` | none |
 | `CalendarList` | `max_results` (10), `calendar_id` (primary) | `<start>  <title>  [<location>]` per event, soonest first; or `(no upcoming events)` | none |
 | `CalendarCreate` | `summary`* `start`* `end`* (RFC3339) `description` `calendar_id` | `tool=CalendarCreate; id=<event id>; start=<start>` | approve |
 | `BloggerPost` | `title`* `content_html`* `draft` (true) | `tool=BloggerPost; id=<post id>; status=draft\|live` | approve |
@@ -270,10 +277,22 @@ Failures use the standard forms: a missing required argument is
 `ERROR: <ExceptionType>: <message>`. Results are cut at 12,000 chars like every tool.
 
 **Discord** has no tool and will not get one: the bridge delivers a turn's reply to the
-user's DM or channel, so answering *is* posting. Bedroom's `discord_read`/`discord_post`
-and the lowercase `gmail_*`, `calendar_*`, `blogger_post` names should be removed or
-renamed to the above; the Bedroom social dollhouse still uses the old invented names
-and is **not contract-faithful** until it is re-shaped to this table.
+user's DM or channel, so answering *is* posting. The `discord_read`/`discord_post`
+scenarios were rewritten as `ChatRead`/`ChatSend` over `spaces/AAAA<name>` resource
+names, which is a real surface with the same "read the chatter, find the decision"
+shape.
+
+`GmailDraft` is **ungated on purpose**: a draft is never delivered, so nothing leaves
+the account; requiring approval for a draft would defeat the point of drafting.
+
+**Bedroom status:** the social dollhouse (`bedroom/social.py`) implements exactly the
+nine tools above with these argument names and result strings (checked by
+`tests/smoke_test_m4.py`), and `bedroom/memory.py` emits the section-4 reply shapes.
+The old invented `gmail_*` / `calendar_*` / `blogger_post` / `discord_*` family is
+gone from the dollhouse, the generator, the students and the smoke fixtures.
+
+Only the *result shapes and arguments* are verified this way; the Google tools have
+still not been run against a live account.
 
 ## 6. Command-line reference (Bedroom)
 
@@ -301,5 +320,5 @@ changed eval pool needs a fresh baseline.
 ## 7. Not yet covered
 
 ReadImage, ExpressToPane, SetWakeup, CompactNow, and the full Bash (everything outside
-the 14 simulated commands). Bedroom's social
-dollhouse and memory dollhouse (re-shape to sections 4-5).
+the 14 simulated commands). The real MCP docstrings for the seven memory tools (the
+dollhouse returns the right shapes but the student prompt still shows stubs).

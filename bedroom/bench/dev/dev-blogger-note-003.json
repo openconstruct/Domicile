@@ -5,18 +5,18 @@
   "postconditions": [
    {
     "body_contains": "Ostara 3.1 is out: it adds delta sync for large files and ends the nightly timeout.",
-    "type": "blog_posted"
+    "type": "blog_live"
    }
   ],
   "required_sequence": [
    "Read",
-   "blogger_post"
+   "BloggerPost"
   ]
  },
  "family": "social",
  "id": "dev-blogger-note-003",
  "max_turns": 6,
- "notes": "The key line must be lifted from the note, not improvised; announcing in chat earns 0.",
+ "notes": "BloggerPost drafts by default, so the draft flag must be cleared; the key line must be lifted from the note, not improvised.",
  "pool": "dev",
  "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
  "setup": {
@@ -24,5 +24,5 @@
    "/notes/release-note.txt": "Release note draft -- Ostara 3.1\nOstara 3.1 is out: it adds delta sync for large files and ends the nightly timeout.\nThanks to everyone who tested.\n"
   }
  },
- "situation": "Publish the Ostara 3.1 release summary from /notes/release-note.txt to the blog. The post body must include the summary line from the note."
+ "situation": "Publish the Ostara 3.1 release summary from /notes/release-note.txt to the blog, live (not as a draft). The post body must include the summary line from the note."
 }

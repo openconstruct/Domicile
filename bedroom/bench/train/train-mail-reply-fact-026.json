@@ -15,10 +15,10 @@
    }
   ],
   "required_sequence": [
-   "gmail_search",
-   "gmail_read",
+   "GmailSearch",
+   "GmailRead",
    "Read",
-   "gmail_send"
+   "GmailSend"
   ]
  },
  "family": "social",
@@ -36,15 +36,19 @@
    "inbox": [
     {
      "body": "Hi -- I'm writing the runbook and need the shipped default retention window for Sextant snapshots. What is it, in days?",
+     "date": "Thu, 22 Oct 2026 09:14:00 -0400",
      "from": "dana@example.com",
      "id": "msg-101",
-     "subject": "Sextant retention for the runbook"
+     "subject": "Sextant retention for the runbook",
+     "to": "resident"
     },
     {
      "body": "Separate thread: same question for Tessellate -- the shipped default retention window, in days? (Answer on the Tessellate thread, not this one.)",
+     "date": "Thu, 22 Oct 2026 09:31:00 -0400",
      "from": "dana@example.com",
      "id": "msg-102",
-     "subject": "Tessellate retention for the runbook"
+     "subject": "Tessellate retention for the runbook",
+     "to": "resident"
     }
    ]
   }

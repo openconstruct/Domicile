@@ -16,8 +16,8 @@
     "args_match": {
       "memory_id": {
         "one_of": [
-          "m-001",
-          "m-002"
+          "aeef0000",
+          "aeef0001"
         ]
       }
     },

@@ -3,14 +3,14 @@
  "expected": {
   "postconditions": [
    {
-    "start": "2026-10-23T12:30",
+    "start": "2026-10-23T12:30:00-04:00",
     "title_contains": "Quillmark sync",
     "type": "calendar_event"
    }
   ],
   "required_sequence": [
-   "calendar_list",
-   "calendar_create"
+   "CalendarList",
+   "CalendarCreate"
   ]
  },
  "family": "calendar",
@@ -22,57 +22,66 @@
   "social": {
    "calendar": [
     {
-     "end": "2026-10-23T10:00",
+     "end": "2026-10-23T10:00:00-04:00",
      "id": "evt-001",
-     "start": "2026-10-23T09:00",
+     "start": "2026-10-23T09:00:00-04:00",
+     "summary": "Team standup",
      "title": "Team standup"
     },
     {
-     "end": "2026-10-23T12:00",
+     "end": "2026-10-23T12:00:00-04:00",
      "id": "evt-002",
-     "start": "2026-10-23T10:00",
+     "start": "2026-10-23T10:00:00-04:00",
+     "summary": "Focus block - no meetings",
      "title": "Focus block - no meetings"
     },
     {
-     "end": "2026-10-23T12:30",
+     "end": "2026-10-23T12:30:00-04:00",
      "id": "evt-003",
-     "start": "2026-10-23T12:00",
+     "start": "2026-10-23T12:00:00-04:00",
+     "summary": "Lunch with Dana",
      "title": "Lunch with Dana"
     },
     {
-     "end": "2026-10-23T14:30",
+     "end": "2026-10-23T14:30:00-04:00",
      "id": "evt-004",
-     "start": "2026-10-23T13:15",
+     "start": "2026-10-23T13:15:00-04:00",
+     "summary": "Vendor call - Sextant renewal",
      "title": "Vendor call - Sextant renewal"
     },
     {
-     "end": "2026-10-23T15:00",
+     "end": "2026-10-23T15:00:00-04:00",
      "id": "evt-005",
-     "start": "2026-10-23T14:30",
+     "start": "2026-10-23T14:30:00-04:00",
+     "summary": "Design review",
      "title": "Design review"
     },
     {
-     "end": "2026-10-23T15:30",
+     "end": "2026-10-23T15:30:00-04:00",
      "id": "evt-006",
-     "start": "2026-10-23T15:00",
+     "start": "2026-10-23T15:00:00-04:00",
+     "summary": "1:1 with Marcus",
      "title": "1:1 with Marcus"
     },
     {
-     "end": "2026-10-23T17:00",
+     "end": "2026-10-23T17:00:00-04:00",
      "id": "evt-007",
-     "start": "2026-10-23T15:30",
+     "start": "2026-10-23T15:30:00-04:00",
+     "summary": "Deep work - docs",
      "title": "Deep work - docs"
     },
     {
-     "end": "2026-10-22T09:45",
+     "end": "2026-10-22T09:45:00-04:00",
      "id": "evt-008",
-     "start": "2026-10-22T09:00",
+     "start": "2026-10-22T09:00:00-04:00",
+     "summary": "Dentist",
      "title": "Dentist"
     },
     {
-     "end": "2026-10-24T13:15",
+     "end": "2026-10-24T13:15:00-04:00",
      "id": "evt-009",
-     "start": "2026-10-24T12:30",
+     "start": "2026-10-24T12:30:00-04:00",
+     "summary": "Quillmark sync (old series)",
      "title": "Quillmark sync (old series)"
     }
    ]

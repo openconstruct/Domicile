@@ -14,9 +14,9 @@
    }
   ],
   "required_sequence": [
-   "gmail_search",
-   "gmail_read",
-   "gmail_draft"
+   "GmailSearch",
+   "GmailRead",
+   "GmailDraft"
   ]
  },
  "family": "social",
@@ -30,9 +30,11 @@
    "inbox": [
     {
      "body": "Could you draft the deploy checklist reply for me? The steps are: 1) run the smoke tests, 2) ping the on-call, 3) attach the rollback note. Save it as a draft for my review -- do not send it.",
+     "date": "Thu, 22 Oct 2026 10:02:00 -0400",
      "from": "marco@example.com",
      "id": "msg-201",
-     "subject": "Lattice deploy checklist"
+     "subject": "Lattice deploy checklist",
+     "to": "resident"
     }
    ]
   }

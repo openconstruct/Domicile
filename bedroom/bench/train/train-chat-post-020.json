@@ -1,0 +1,37 @@
+{
+ "archetype": "chat-post",
+ "difficulty": 1,
+ "expected": {
+  "postconditions": [
+   {
+    "space": "spaces/AAAAstandup",
+    "text_contains": "Quillmark migration merged; the pruner is still blocked on review",
+    "type": "chat_posted"
+   },
+   {
+    "space": "spaces/AAAArandom",
+    "text_contains": "Quillmark migration merged; the pruner is still blocked on review",
+    "type": "chat_not_posted"
+   }
+  ],
+  "required_sequence": [
+   "ChatSend"
+  ]
+ },
+ "family": "social",
+ "id": "train-chat-post-020",
+ "max_turns": 6,
+ "notes": "Similar-name space bait; the graded text must land in exactly the named space.",
+ "pool": "train",
+ "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
+ "setup": {
+  "social": {
+   "spaces": {
+    "spaces/AAAAgeneral": [],
+    "spaces/AAAArandom": [],
+    "spaces/AAAAstandup": []
+   }
+  }
+ },
+ "situation": "Post this update to spaces/AAAAstandup: 'Quillmark migration merged; the pruner is still blocked on review'. Post it exactly once, to that space only."
+}

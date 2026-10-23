@@ -14,7 +14,7 @@
     "tool": "mcp__memory__memory_delete",
     "args_match": {
       "memory_id": {
-        "equals": "m-002"
+        "equals": "aeef0001"
       }
     },
     "postconditions": [

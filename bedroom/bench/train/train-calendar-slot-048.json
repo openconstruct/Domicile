@@ -4,29 +4,29 @@
  "expected": {
   "postconditions": [
    {
-    "start": "2026-11-19T15:30",
+    "start": "2026-11-19T15:30:00-04:00",
     "title_contains": "Fernway planning",
     "type": "calendar_event"
    },
    {
-    "start": "2026-11-19T09:00",
+    "start": "2026-11-19T09:00:00-04:00",
     "title_contains": "Fernway planning",
     "type": "calendar_no_event"
    },
    {
-    "start": "2026-11-19T10:30",
+    "start": "2026-11-19T10:30:00-04:00",
     "title_contains": "Fernway planning",
     "type": "calendar_no_event"
    },
    {
-    "start": "2026-11-19T13:00",
+    "start": "2026-11-19T13:00:00-04:00",
     "title_contains": "Fernway planning",
     "type": "calendar_no_event"
    }
   ],
   "required_sequence": [
-   "calendar_list",
-   "calendar_create"
+   "CalendarList",
+   "CalendarCreate"
   ]
  },
  "family": "social",
@@ -39,25 +39,25 @@
   "social": {
    "calendar": [
     {
-     "end": "2026-11-19T09:45",
+     "end": "2026-11-19T09:45:00-04:00",
      "id": "evt-101",
-     "start": "2026-11-19T09:00",
+     "start": "2026-11-19T09:00:00-04:00",
      "title": "Tessellate sync"
     },
     {
-     "end": "2026-11-19T11:15",
+     "end": "2026-11-19T11:15:00-04:00",
      "id": "evt-102",
-     "start": "2026-11-19T10:30",
+     "start": "2026-11-19T10:30:00-04:00",
      "title": "Tessellate sync"
     },
     {
-     "end": "2026-11-19T13:45",
+     "end": "2026-11-19T13:45:00-04:00",
      "id": "evt-103",
-     "start": "2026-11-19T13:00",
+     "start": "2026-11-19T13:00:00-04:00",
      "title": "Fernway sync"
     }
    ]
   }
  },
- "situation": "Book 'Fernway planning' on 2026-11-19 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30. Check the calendar first; never double-book a slot."
+ "situation": "Book 'Fernway planning' on 2026-11-19 for 45 minutes at the earliest of these times that is free: 09:00, 10:30, 13:00, 15:30 (Eastern). Check the calendar first; never double-book a slot."
 }

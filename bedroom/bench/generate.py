@@ -25,6 +25,8 @@ oracle=1 / degenerate=0 / no leaks lives in audit.py.
 import hashlib, json, random
 from pathlib import Path
 
+from bedroom.memory import _hex8 as hex8  # memory ids must match the dollhouse
+
 BENCH_DIR = Path(__file__).resolve().parent
 POOLS = ("train", "dev", "eval")
 COUNTS = {"train": 70, "dev": 4, "eval": 12}
@@ -264,9 +266,9 @@ def gen_mem_delete(rng, v, pool, idx):
              f"{person} works on the night shift",
              _pick(rng, FIRST_FACTS).replace("the operator", person)]
     rng.shuffle(facts)
-    # ids are assigned in list order by FactStore
+    # ids are assigned in list order by FactStore (8-char hex, the real shape)
     pos = [i for i, f in enumerate(facts) if "badge number" in f][0]
-    target_id = f"m-{pos + 1:03d}"
+    target_id = hex8(pos)
     sc = _scenario(pool, "mem-delete", idx, "memory", 2,
                    f"{person}'s badge number is no longer valid and the stored fact about it "
                    f"should be removed from long-term memory. Delete exactly that one fact; "
@@ -298,7 +300,7 @@ def gen_mem_route(rng, v, pool, idx):
                     **_final_contains(new_addr)},
                    "Escalation by construction: mem0 is stale, the correction lives only in mem2; "
                    "routing is paid by the required sequence.")
-    stale_id = "m-001"
+    stale_id = hex8(0)
     oracle = [{"tool": MS, "args": {"query": "operator home address"}},
               {"tool": M2S, "args": {"query": "moved new address"}},
               {"tool": MD, "args": {"memory_id": stale_id}},
@@ -345,15 +347,17 @@ def gen_web_fact(rng, v, pool, idx):
 
 
 # ---------------------------------------------------------------- social
-GS = "gmail_search"
-GR = "gmail_read"
-GE = "gmail_send"
-GD = "gmail_draft"
-CL = "calendar_list"
-CC = "calendar_create"
-BP = "blogger_post"
-DR = "discord_read"
-DP = "discord_post"
+# Domicile's real Google tool names (google_tools.py). The old lowercase
+# gmail_*/calendar_*/blogger_post/discord_* family did not exist in Domicile.
+GS = "GmailSearch"
+GR = "GmailRead"
+GE = "GmailSend"
+GD = "GmailDraft"
+CL = "CalendarList"
+CC = "CalendarCreate"
+BP = "BloggerPost"
+DR = "ChatRead"
+DP = "ChatSend"
 
 
 def _mail_pair(rng, v, proj_a, proj_b):
@@ -371,11 +375,13 @@ def gen_mail_reply_fact(rng, v, pool, idx):
     note = (f"{proj} ops notes.\nThe shipped default retention window for {proj} "
             f"snapshots is {window} days when retention_days is not set.\n")
     inbox = [
-        {"id": "msg-101", "from": f"{sender.lower()}@{dom}",
+        {"id": "msg-101", "from": f"{sender.lower()}@{dom}", "to": "resident",
+         "date": "Thu, 22 Oct 2026 09:14:00 -0400",
          "subject": f"{proj} retention for the runbook",
          "body": f"Hi -- I'm writing the runbook and need the shipped default retention window "
                  f"for {proj} snapshots. What is it, in days?"},
-        {"id": "msg-102", "from": f"{sender.lower()}@{dom}",
+        {"id": "msg-102", "from": f"{sender.lower()}@{dom}", "to": "resident",
+         "date": "Thu, 22 Oct 2026 09:31:00 -0400",
          "subject": f"{other} retention for the runbook",
          "body": f"Separate thread: same question for {other} -- the shipped default retention "
                  f"window, in days? (Answer on the {other} thread, not this one.)"},
@@ -413,7 +419,8 @@ def gen_mail_draft(rng, v, pool, idx):
     item1, item2, item3 = _sample(rng, ["run the smoke tests", "take a fresh snapshot",
                                         "attach the rollback note", "ping the on-call",
                                         "freeze the schema"], 3)
-    inbox = [{"id": "msg-201", "from": f"{sender.lower()}@{dom}",
+    inbox = [{"id": "msg-201", "from": f"{sender.lower()}@{dom}", "to": "resident",
+              "date": "Thu, 22 Oct 2026 10:02:00 -0400",
               "subject": f"{proj} deploy checklist",
               "body": f"Could you draft the deploy checklist reply for me? The steps are: "
                       f"1) {item1}, 2) {item2}, 3) {item3}. Save it as a draft for my "
@@ -440,84 +447,97 @@ def gen_mail_draft(rng, v, pool, idx):
     return sc, oracle
 
 
+def _rfc(day, hh, mm):
+    return f"{day}T{hh:02d}:{mm:02d}:00-04:00"
+
+
 def gen_calendar_slot(rng, v, pool, idx):
     proj = _pick(rng, v["projects"])
     day = f"2026-11-{rng.randrange(10, 25):02d}"
-    candidates = ["09:00", "10:30", "13:00", "15:30"]
+    candidates = [(9, 0), (10, 30), (13, 0), (15, 30)]
     blocked = sorted(_sample(rng, range(4), rng.randrange(1, 4)))
     free = [i for i in range(4) if i not in blocked]
     chosen = candidates[free[0]]
     events = []
     for n, i in enumerate(blocked):
+        hh, mm = candidates[i]
+        em = mm + 45
         events.append({"id": f"evt-{101 + n}", "title": f"{_pick(rng, v['projects'])} sync",
-                       "start": f"{day}T{candidates[i]}", "end": f"{day}T{candidates[i][:2]}:45"
-                       if candidates[i][3:] == "00" else f"{day}T{candidates[i][:2]}:59"})
-    for e in events:  # normalize ends: 45 minutes after start
-        hh, mm = int(e["start"][11:13]), int(e["start"][14:16])
-        end_m = mm + 45
-        e["end"] = f"{day}T{hh + end_m // 60:02d}:{end_m % 60:02d}"
-    hh, mm = int(chosen[:2]), int(chosen[3:])
-    chosen_end = f"{hh + (mm + 45) // 60:02d}:{(mm + 45) % 60:02d}"
+                       "start": _rfc(day, hh, mm),
+                       "end": _rfc(day, hh + em // 60, em % 60)})
+    hh, mm = chosen
+    em = mm + 45
+    chosen_end = (hh + em // 60, em % 60)
     title = f"{proj} planning"
-    pcs = [{"type": "calendar_event", "title_contains": title, "start": f"{day}T{chosen}"}]
+    pcs = [{"type": "calendar_event", "title_contains": title, "start": _rfc(day, hh, mm)}]
     for i in blocked:
         pcs.append({"type": "calendar_no_event", "title_contains": title,
-                    "start": f"{day}T{candidates[i]}"})
+                    "start": _rfc(day, *candidates[i])})
     sc = _scenario(pool, "calendar-slot", idx, "social", 3,
                    f"Book '{title}' on {day} for 45 minutes at the earliest of these times "
-                   f"that is free: {', '.join(candidates)}. Check the calendar first; never "
-                   f"double-book a slot.",
+                   f"that is free: 09:00, 10:30, 13:00, 15:30 (Eastern). Check the calendar "
+                   f"first; never double-book a slot.",
                    {"social": {"calendar": events}},
                    {"required_sequence": [CL, CC], "postconditions": pcs},
                    "The free slot is computed from the seeded blockers; booking a blocked "
                    "candidate or a later free one both fail.")
     oracle = [{"tool": CL, "args": {}},
-              {"tool": CC, "args": {"title": title, "start": f"{day}T{chosen}",
-                                    "end": f"{day}T{chosen_end}"}},
-              {"text": f"Booked {title} at {chosen}, the earliest free slot."}]
+              {"tool": CC, "args": {"summary": title, "start": _rfc(day, hh, mm),
+                                    "end": _rfc(day, *chosen_end)}},
+              {"text": f"Booked {title} at {hh:02d}:{mm:02d}, the earliest free slot."}]
     return sc, oracle
 
 
-def gen_discord_post(rng, v, pool, idx):
+def gen_chat_post(rng, v, pool, idx):
     proj = _pick(rng, v["projects"])
-    right_ch, bait_ch = _sample(rng, [["standup", "random"], ["ops", "general"],
-                                      ["deploys", "dev-chat"], ["announce", "announcements"]], 1)[0]
+    right_name, bait_name = _sample(rng, [["standup", "random"], ["ops", "general"],
+                                          ["deploys", "dev-chat"],
+                                          ["announce", "announcements"]], 1)[0]
+    right = f"spaces/AAAA{right_name}"
+    bait = f"spaces/AAAA{bait_name}"
     line = rng.choice([f"{proj} migration merged; the pruner is still blocked on review",
                        f"{proj} 2.4 freeze starts tonight at 23:00 UTC",
                        f"{proj} load tests passed; ship decision at standup"])
-    discord = {right_ch: [], bait_ch: [], "general" if bait_ch != "general" else "random": []}
-    sc = _scenario(pool, "discord-post", idx, "social", 1,
-                   f"Post this update to #{right_ch}: '{line}'. Post it exactly once, "
-                   f"to that channel only.",
-                   {"social": {"discord": discord}},
+    spaces = {right: [], bait: []}
+    for extra in ("spaces/AAAAgeneral", "spaces/AAAArandom"):
+        spaces.setdefault(extra, [])
+    sc = _scenario(pool, "chat-post", idx, "social", 1,
+                   f"Post this update to {right}: '{line}'. Post it exactly once, "
+                   f"to that space only.",
+                   {"social": {"spaces": spaces}},
                    {"required_sequence": [DP],
                     "postconditions": [
-                        {"type": "discord_posted", "channel": right_ch, "text_contains": line},
-                        {"type": "discord_not_posted", "channel": bait_ch, "text_contains": line}]},
-                   "Similar-name channel bait; the graded text must land in exactly the named channel.")
-    oracle = [{"tool": DP, "args": {"channel": right_ch, "text": line}},
-              {"text": f"Posted to #{right_ch}."}]
+                        {"type": "chat_posted", "space": right, "text_contains": line},
+                        {"type": "chat_not_posted", "space": bait, "text_contains": line}]},
+                   "Similar-name space bait; the graded text must land in exactly the named space.")
+    oracle = [{"tool": DP, "args": {"space": right, "text": line}},
+              {"text": f"Posted to {right}."}]
     return sc, oracle
 
 
-def gen_discord_read(rng, v, pool, idx):
+def gen_chat_read(rng, v, pool, idx):
     proj = _pick(rng, v["projects"])
     day1, day2 = _sample(rng, ["November 2", "November 9", "October 30", "November 16",
                                "December 1"], 2)
+    space = "spaces/AAAAops"
     chatter = [
-        {"author": "kim", "text": f"any update on the {proj} freeze?"},
-        {"author": "lee", "text": "still deciding between two dates"},
-        {"author": "ops-lead", "text": f"Decision: the {proj} deploy freeze starts {day1} "
-                                       f"and lifts on {day2}."},
-        {"author": "kim", "text": "thanks, marking the calendar"},
+        {"sender": "kim", "text": f"any update on the {proj} freeze?",
+         "createTime": "2026-10-29T14:02:00Z"},
+        {"sender": "lee", "text": "still deciding between two dates",
+         "createTime": "2026-10-29T14:05:00Z"},
+        {"sender": "ops-lead", "text": f"Decision: the {proj} deploy freeze starts {day1} "
+                                       f"and lifts on {day2}.",
+         "createTime": "2026-10-29T14:09:00Z"},
+        {"sender": "kim", "text": "thanks, marking the calendar",
+         "createTime": "2026-10-29T14:11:00Z"},
     ]
-    sc = _scenario(pool, "discord-read", idx, "social", 2,
-                   f"What did the team decide about the {proj} deploy freeze in #ops? "
-                   f"Read the channel and answer with the start date.",
-                   {"social": {"discord": {"ops": chatter}}},
+    sc = _scenario(pool, "chat-read", idx, "social", 2,
+                   f"What did the team decide about the {proj} deploy freeze in {space}? "
+                   f"Read the space and answer with the start date.",
+                   {"social": {"spaces": {space: chatter}}},
                    {"required_sequence": [DR], **_final_contains(day1)},
-                   "The decision sits mid-chatter; answering from memory or the first message fails.")
-    oracle = [{"tool": DR, "args": {"channel": "ops"}},
+                   "The decision sits mid-chatter; answering from memory or the newest message fails.")
+    oracle = [{"tool": DR, "args": {"space": space}},
               {"text": f"The freeze starts {day1}."}]
     return sc, oracle
 
@@ -534,14 +554,17 @@ def gen_blogger_note(rng, v, pool, idx):
              f"Release note draft -- {proj} {version}\n{key_line}\nThanks to everyone who tested.\n"}
     sc = _scenario(pool, "blogger-note", idx, "social", 2,
                    f"Publish the {proj} {version} release summary from /notes/release-note.txt "
-                   f"to the blog. The post body must include the summary line from the note.",
+                   f"to the blog, live (not as a draft). The post body must include the summary "
+                   f"line from the note.",
                    {"files": files},
                    {"required_sequence": ["Read", BP],
-                    "postconditions": [{"type": "blog_posted", "body_contains": key_line}]},
-                   "The key line must be lifted from the note, not improvised; announcing in chat earns 0.")
+                    "postconditions": [{"type": "blog_live", "body_contains": key_line}]},
+                   "BloggerPost drafts by default, so the draft flag must be cleared; the key "
+                   "line must be lifted from the note, not improvised.")
     oracle = [{"tool": "Read", "args": {"path": "/notes/release-note.txt"}},
-              {"tool": BP, "args": {"title": f"{proj} {version} release", "body": key_line}},
-              {"text": "Posted the release summary to the blog."}]
+              {"tool": BP, "args": {"title": f"{proj} {version} release",
+                                    "content_html": key_line, "draft": False}},
+              {"text": "Published the release summary to the blog."}]
     return sc, oracle
 
 
@@ -829,8 +852,8 @@ ARCHETYPES = {
     "mem-delete": gen_mem_delete, "mem-route": gen_mem_route,
     "web-fact": gen_web_fact,
     "mail-reply-fact": gen_mail_reply_fact, "mail-draft": gen_mail_draft,
-    "calendar-slot": gen_calendar_slot, "discord-post": gen_discord_post,
-    "discord-read": gen_discord_read, "blogger-note": gen_blogger_note,
+    "calendar-slot": gen_calendar_slot, "chat-post": gen_chat_post,
+    "chat-read": gen_chat_read, "blogger-note": gen_blogger_note,
     "bash-count": gen_bash_count, "bash-rename": gen_bash_rename,
     "bash-sed": gen_bash_sed, "bash-find": gen_bash_find,
     "bash-sort": gen_bash_sort, "bash-append": gen_bash_append,

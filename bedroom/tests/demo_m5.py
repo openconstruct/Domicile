@@ -18,10 +18,10 @@ SCRIPT = {
         {"text": "/data/exports/audit.log\n/data/old/access.log\n/data/server.log"},
     ],
     "calendar-0001": [
-        {"tool": "calendar_list", "args": {}},
-        {"tool": "calendar_create", "args": {"title": "Quillmark sync",
-                                             "start": "2026-10-23T12:30",
-                                             "end": "2026-10-23T13:15"}},
+        {"tool": "CalendarList", "args": {}},
+        {"tool": "CalendarCreate", "args": {"summary": "Quillmark sync",
+                                            "start": "2026-10-23T12:30:00-04:00",
+                                            "end": "2026-10-23T13:15:00-04:00"}},
         {"text": "Booked Quillmark sync for Friday 12:30-13:15."},
     ],
 }

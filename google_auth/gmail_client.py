@@ -89,10 +89,7 @@ def mark_read(msg_id: str) -> None:
     ).execute()
 
 
-def send_message(to: str, subject: str, body: str, thread_id: str | None = None) -> dict:
-    """Send a plain-text email. Pass thread_id to reply within an existing
-    thread (subject should then carry the Re: prefix if you want that)."""
-    service = get_gmail_service()
+def _compose(to: str, subject: str, body: str, thread_id: str | None) -> dict:
     msg = MIMEText(body)
     msg["to"] = to
     msg["subject"] = subject
@@ -100,4 +97,20 @@ def send_message(to: str, subject: str, body: str, thread_id: str | None = None)
     request_body = {"raw": raw}
     if thread_id:
         request_body["threadId"] = thread_id
-    return service.users().messages().send(userId="me", body=request_body).execute()
+    return request_body
+
+
+def send_message(to: str, subject: str, body: str, thread_id: str | None = None) -> dict:
+    """Send a plain-text email. Pass thread_id to reply within an existing
+    thread (subject should then carry the Re: prefix if you want that)."""
+    service = get_gmail_service()
+    return service.users().messages().send(
+        userId="me", body=_compose(to, subject, body, thread_id)).execute()
+
+
+def create_draft(to: str, subject: str, body: str, thread_id: str | None = None) -> dict:
+    """Save a plain-text email as a draft. Nothing is delivered; the draft
+    waits in the account for a human to review and send it."""
+    service = get_gmail_service()
+    return service.users().drafts().create(
+        userId="me", body={"message": _compose(to, subject, body, thread_id)}).execute()

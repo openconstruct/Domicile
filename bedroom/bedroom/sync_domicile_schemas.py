@@ -11,7 +11,9 @@ vendored file is stale.
 import argparse, json, sys
 from pathlib import Path
 
-NAMES = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch", "WebFetch"]
+NAMES = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch", "WebFetch",
+         "GmailSearch", "GmailRead", "GmailSend", "GmailDraft",
+         "CalendarList", "CalendarCreate", "BloggerPost", "ChatRead", "ChatSend"]
 OUT = Path(__file__).resolve().parent / "domicile_tools.json"
 
 

@@ -47,7 +47,7 @@ ORACLE = {
     "web-0006": [
         {"tool": WS, "args": {"query": "team handbook standup time"}},
         {"tool": WF, "args": {"url": "https://handbook.northloop.example/meetings"}},
-        {"tool": MDEL, "args": {"memory_id": "m-001"}},
+        {"tool": MDEL, "args": {"memory_id": "aeef0000"}},
         {"tool": MADD, "args": {"text": "the operator's team standup is at 10:15 AM"}},
         {"text": "The standup is now at 10:15 AM."},
     ],

@@ -9,10 +9,10 @@
    }
   ],
   "required_sequence": [
-   "gmail_search",
-   "gmail_read",
+   "GmailSearch",
+   "GmailRead",
    "Read",
-   "gmail_send"
+   "GmailSend"
   ]
  },
  "family": "gmail",

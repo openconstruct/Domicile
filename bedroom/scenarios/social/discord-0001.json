@@ -3,38 +3,44 @@
  "expected": {
   "postconditions": [
    {
-    "channel": "standup",
+    "space": "spaces/AAAAstandup",
     "text_contains": "snapshot pruner still blocked on review",
-    "type": "discord_posted"
+    "type": "chat_posted"
    }
   ],
   "required_sequence": [
-   "discord_post"
+   "ChatSend"
   ]
  },
- "family": "discord",
+ "family": "chat",
  "id": "discord-0001",
  "max_turns": 3,
  "notes": "Channel discrimination at difficulty 1: the summary text is given verbatim, so the only graded judgment is the surface -- #general and #random are seeded decoys, and posting the perfect text to either fails the channel-keyed postcondition.",
  "reward_rule": "sequence followed + postconditions hold + final answer correct = 1 else 0",
  "setup": {
   "social": {
-   "discord": {
-    "general": [
+   "spaces": {
+    "spaces/AAAAgeneral": [
      {
-      "author": "Priya",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Priya",
+      "sender_type": "HUMAN",
       "text": "Has anyone seen the new Fernway build?"
      }
     ],
-    "random": [
+    "spaces/AAAArandom": [
      {
-      "author": "Tomas",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Tomas",
+      "sender_type": "HUMAN",
       "text": "coffee machine is fixed, finally"
      }
     ],
-    "standup": [
+    "spaces/AAAAstandup": [
      {
-      "author": "Marcus",
+      "createTime": "2026-10-29T14:00:00Z",
+      "sender": "Marcus",
+      "sender_type": "HUMAN",
       "text": "Yesterday: shipped the exporter fix. Today: migration review."
      }
     ]

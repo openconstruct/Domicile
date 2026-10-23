@@ -3,19 +3,19 @@
  "expected": {
   "postconditions": [
    {
-    "start": "2026-10-28T14:00",
+    "start": "2026-10-28T14:00:00-04:00",
     "title_contains": "Tessellate design review",
     "type": "calendar_event"
    },
    {
-    "start": "2026-10-27T14:00",
+    "start": "2026-10-27T14:00:00-04:00",
     "title_contains": "Tessellate design review",
     "type": "calendar_no_event"
    }
   ],
   "required_sequence": [
-   "calendar_list",
-   "calendar_create"
+   "CalendarList",
+   "CalendarCreate"
   ]
  },
  "family": "calendar",
@@ -27,27 +27,31 @@
   "social": {
    "calendar": [
     {
-     "end": "2026-10-27T15:00",
+     "end": "2026-10-27T15:00:00-04:00",
      "id": "evt-101",
-     "start": "2026-10-27T14:00",
+     "start": "2026-10-27T14:00:00-04:00",
+     "summary": "Design review prep - Tessellate team",
      "title": "Design review prep - Tessellate team"
     },
     {
-     "end": "2026-10-27T09:30",
+     "end": "2026-10-27T09:30:00-04:00",
      "id": "evt-102",
-     "start": "2026-10-27T09:00",
+     "start": "2026-10-27T09:00:00-04:00",
+     "summary": "Team standup",
      "title": "Team standup"
     },
     {
-     "end": "2026-10-28T11:00",
+     "end": "2026-10-28T11:00:00-04:00",
      "id": "evt-103",
-     "start": "2026-10-28T09:00",
+     "start": "2026-10-28T09:00:00-04:00",
+     "summary": "Focus block",
      "title": "Focus block"
     },
     {
-     "end": "2026-10-28T16:30",
+     "end": "2026-10-28T16:30:00-04:00",
      "id": "evt-104",
-     "start": "2026-10-28T16:00",
+     "start": "2026-10-28T16:00:00-04:00",
+     "summary": "1:1 with Priya",
      "title": "1:1 with Priya"
     }
    ]

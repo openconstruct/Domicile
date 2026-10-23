@@ -2,42 +2,45 @@
 
 Same llama-server path as lfm_student_web.py (model's own chat template,
 --jinja, tools array; whole observation history replayed each turn), with
-the M4 tool surface: the simulated Google/Discord nine (gmail_search /
-gmail_read / gmail_send / gmail_draft, calendar_list / calendar_create,
-blogger_post, discord_read / discord_post) plus the standard set the
-multi runner offers that the social scenarios exercise.
+the M4 tool surface: Domicile's nine Google tools (GmailSearch, GmailRead,
+GmailSend, GmailDraft, CalendarList, CalendarCreate, BloggerPost, ChatRead,
+ChatSend) plus the standard set the multi runner offers.
+
+The Google/Web schemas are NOT hand-written here: they are loaded from
+bedroom/domicile_tools.json, which sync_domicile_schemas exports from
+local_tools. Hand-copied descriptions drifted from the real ones once
+already; the model must be shown exactly what Domicile shows it.
 """
 import json, urllib.request
+from pathlib import Path
 
 URL = "http://127.0.0.1:8091/v1/chat/completions"
+_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "bedroom" / "domicile_tools.json"
+_DOMICILE = {t["function"]["name"]: t for t in json.loads(_SCHEMA_PATH.read_text())}
+
+
 def fn(name, desc, props, req):
     return {"type": "function", "function": {"name": name, "description": desc,
             "parameters": {"type": "object", "properties": props, "required": req}}}
+
+
+def real(*names):
+    return [_DOMICILE[n] for n in names]
+
+
 S = {"type": "string"}
-TOOLS = [
-    fn("gmail_search", "Search the inbox. Returns message blocks with ids, senders, subjects and snippets.",
-       {"query": S, "count": {"type": "integer"}}, ["query"]),
-    fn("gmail_read", "Read one inbox message in full, by its id.", {"id": S}, ["id"]),
-    fn("gmail_send", "Send an email.", {"to": S, "subject": S, "body": S}, ["to", "subject", "body"]),
-    fn("gmail_draft", "Save an email as a draft for review instead of sending it.",
-       {"to": S, "subject": S, "body": S}, ["to", "subject", "body"]),
-    fn("calendar_list", "List calendar events with ids, titles and start/end times.", {}, []),
-    fn("calendar_create", "Create a calendar event. Start and end are ISO strings like 2026-10-23T12:30.",
-       {"title": S, "start": S, "end": S}, ["title", "start", "end"]),
-    fn("blogger_post", "Publish a post to the Blogger blog.", {"title": S, "body": S}, ["title", "body"]),
-    fn("discord_read", "Read recent messages from a Discord channel.", {"channel": S, "limit": {"type": "integer"}}, ["channel"]),
-    fn("discord_post", "Post a message to a Discord channel.", {"channel": S, "text": S}, ["channel", "text"]),
-    fn("WebSearch", "Search the web. Returns titled result blocks with URLs and snippets.",
-       {"query": S, "count": {"type": "integer"}}, ["query"]),
-    fn("WebFetch", "Fetch the full body of a page by its exact URL.", {"url": S}, ["url"]),
-    fn("mcp__memory__memory_search", "Search long-term memory semantically.", {"query": S, "limit": {"type": "integer"}}, ["query"]),
-    fn("mcp__memory__memory_add", "Store one self-contained, third-person fact in long-term memory.", {"text": S}, ["text"]),
-    fn("mcp__memory__memory_list", "List stored memories, newest first.", {"limit": {"type": "integer"}}, []),
-    fn("mcp__memory__memory_delete", "Delete one memory by id.", {"memory_id": S}, ["memory_id"]),
-    fn("mcp__mem2__mem2_search", "Search past conversations.", {"query": S, "limit": {"type": "integer"}}, ["query"]),
-    fn("Write", "Write a file, overwriting it entirely.", {"path": S, "content": S}, ["path", "content"]),
-    fn("Read", "Read a file.", {"path": S}, ["path"]),
-]
+TOOLS = (
+    real("GmailSearch", "GmailRead", "GmailSend", "GmailDraft",
+         "CalendarList", "CalendarCreate", "BloggerPost", "ChatRead", "ChatSend",
+         "WebSearch", "WebFetch", "Read", "Write")
+    + [
+        fn("mcp__memory__memory_search", "Search long-term memory semantically.", {"query": S, "limit": {"type": "integer"}}, ["query"]),
+        fn("mcp__memory__memory_add", "Store one self-contained, third-person fact in long-term memory.", {"text": S}, ["text"]),
+        fn("mcp__memory__memory_list", "List stored memories, newest first.", {"limit": {"type": "integer"}}, []),
+        fn("mcp__memory__memory_delete", "Delete one memory by id.", {"memory_id": S}, ["memory_id"]),
+        fn("mcp__mem2__mem2_search", "Search past conversations.", {"query": S, "limit": {"type": "integer"}}, ["query"]),
+    ]
+)
 
 def lfm_student_social(obs):
     content = obs["situation"]

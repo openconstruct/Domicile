@@ -21,7 +21,10 @@ _GA = str(Path(__file__).resolve().parent / "google_auth")
 
 READ_TOOLS = ["GmailSearch", "GmailRead", "CalendarList", "ChatRead"]
 WRITE_TOOLS = ["GmailSend", "CalendarCreate", "BloggerPost", "ChatSend"]
-ALL_TOOLS = READ_TOOLS + WRITE_TOOLS
+# GmailDraft writes but delivers nothing, so it needs no approval: the whole
+# point of a draft is that a human reviews it before anything is sent.
+UNGATED_TOOLS = ["GmailDraft"]
+ALL_TOOLS = READ_TOOLS + WRITE_TOOLS + UNGATED_TOOLS
 
 _APPROVER: Callable[[str, str, dict], bool] | None = None
 
@@ -110,6 +113,13 @@ def gmail_send(args: dict) -> dict:
     return {"ok": True, "tool": "GmailSend", "to": to, "id": r.get("id", "")}
 
 
+def gmail_draft(args: dict) -> dict:
+    """Ungated: a draft is not delivered, so nothing leaves the account."""
+    to, subject, body = _s(args, "to"), _s(args, "subject"), _s(args, "body")
+    r = _client("gmail_client").create_draft(to, subject, body, args.get("thread_id") or None)
+    return {"ok": True, "tool": "GmailDraft", "to": to, "id": r.get("id", "")}
+
+
 def calendar_create(args: dict) -> dict:
     summary, start, end = _s(args, "summary"), _s(args, "start"), _s(args, "end")
     _approve("CalendarCreate", f"Create event {summary!r} at {start}", args)
@@ -139,7 +149,8 @@ def chat_send(args: dict) -> dict:
 IMPL = {
     "GmailSearch": gmail_search, "GmailRead": gmail_read,
     "CalendarList": calendar_list, "ChatRead": chat_read,
-    "GmailSend": gmail_send, "CalendarCreate": calendar_create,
+    "GmailSend": gmail_send, "GmailDraft": gmail_draft,
+    "CalendarCreate": calendar_create,
     "BloggerPost": blogger_post, "ChatSend": chat_send,
 }
 
@@ -159,6 +170,14 @@ SCHEMAS = {
                        "required": ["id"]}},
     "GmailSend": {
         "description": "Send a plain-text email. Needs the user's approval.",
+        "parameters": {"type": "object", "properties": {
+            "to": _STR, "subject": _STR, "body": _STR,
+            "thread_id": {"type": "string", "description": "Reply within this thread"},
+        }, "required": ["to", "subject", "body"]}},
+    "GmailDraft": {
+        "description": "Save a plain-text email as a draft instead of sending it. Nothing is "
+                       "delivered; a human reviews the draft and sends it. Use this when asked "
+                       "to draft something for review.",
         "parameters": {"type": "object", "properties": {
             "to": _STR, "subject": _STR, "body": _STR,
             "thread_id": {"type": "string", "description": "Reply within this thread"},

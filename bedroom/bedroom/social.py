@@ -1,54 +1,109 @@
-"""Bedroom M4: simulated Google + Discord dollhouses.
+"""Bedroom M4: Google (and Google Chat) dollhouse -- Domicile's real surface.
 
-Dollhouse implementations of Domicile's Google/Discord surface, per build
-spec section 6: seeded mail / calendar / Blogger state behind gmail_*,
-calendar_* and blogger_post, and seeded channels behind discord_read /
-discord_post. State changes only via tools -- a send, draft, post or
-calendar create mutates the SocialState and nothing else does -- so the
-multi runner can grade end-state postconditions against it.
+Re-shaped 2026-10-22 against domicile/google_tools.py. The old invented tool
+family (gmail_*, calendar_*, blogger_post, discord_read/discord_post) is gone:
+none of those names exists in Domicile, so a policy trained on them learned to
+call tools the house does not have. This module now implements exactly the nine
+model-callable Google tools, with the argument names, required-argument errors
+and result text of google_tools.py:
+
+  GmailSearch  query, max_results         -> "<id>  <date>  <from>  <subject>\\n    <snippet>"
+  GmailRead    id                         -> "From: ..\\nTo: ..\\nSubject: ..\\nDate: ..\\n\\n<body>"
+  GmailSend    to, subject, body          -> "tool=GmailSend; to=..; id=.."
+  GmailDraft   to, subject, body          -> "tool=GmailDraft; to=..; id=.."
+  CalendarList max_results, calendar_id   -> "<start>  <title>[  [<location>]]"
+  CalendarCreate summary, start, end      -> "tool=CalendarCreate; id=..; start=.."
+  BloggerPost  title, content_html, draft -> "tool=BloggerPost; id=..; status=draft|live"
+  ChatRead     space, page_size           -> "<time>  <sender> (<HUMAN|BOT>): <text>"
+  ChatSend     space, text                -> "tool=ChatSend; space=..; name=.."
+
+Calendar times are RFC3339, as the real schema requires. Discord has no tool and
+will not get one: the bridge delivers a reply, so answering is posting. Scenarios
+that needed a "read the channel, answer the decision" shape use ChatRead instead.
 
 Scenario setup shape (setup.social):
-  inbox:    [{id, from, subject, body}] seeded mail
-  calendar: [{id, title, start, end}] seeded events (ISO strings)
-  discord:  {channel: [{author, text}]} seeded channel history
+  inbox:    [{id, from, to, subject, date, body}]   `date`/`to` optional
+  calendar: [{id, title|summary, start, end, location}]  RFC3339 start/end
+  spaces:   {space: [{sender, sender_type, text, createTime}]}
 
-Search ranks by term overlap then difflib ratio over from+subject+body,
-the web dollhouse's _score pattern, so the same query returns the same
-results in the same order forever. Reads return titled text blocks the
-way the real tools do. Bad message ids and unknown channels raise
-ValueError; the runner feeds errors back as observations.
+Dollhouse simplifications (deliberate, documented): search ranks by term overlap
+then difflib ratio over from+subject+body instead of Gmail's query language;
+CalendarList returns the seeded events sorted by start rather than filtering to a
+live "now"; sends do not thread (a reply is a fresh message); ids are synthetic
+but stable; message dates are whatever the setup says, never the wall clock.
 
-Dollhouse simplifications (documented, deliberate): channel names are
-stored without the leading '#'; calendar_create does not reject overlaps
-(double-booking is a graded failure, not an environment error); sends do
-not thread (a reply is a fresh message whose subject carries the Re:).
-An episode with no social setup gets an empty state whose searches all
-return "(no results)".
+State changes only via tools -- a send/draft/post/create mutates the state and
+nothing else does -- so the multi runner grades end-state postconditions.
 """
 import difflib, re
 
-SOCIAL_TOOLS = ["gmail_search", "gmail_read", "gmail_send", "gmail_draft",
-                "calendar_list", "calendar_create", "blogger_post",
-                "discord_read", "discord_post"]
+SOCIAL_TOOLS = ["GmailSearch", "GmailRead", "GmailSend", "GmailDraft",
+                "CalendarList", "CalendarCreate", "BloggerPost",
+                "ChatRead", "ChatSend"]
+
+
+def _s(args, key, required=True):
+    """Mirror google_tools._s: blank or missing required arg is a ValueError."""
+    v = args.get(key)
+    if v is None or str(v).strip() == "":
+        if required:
+            raise ValueError(f"{key} is required")
+        return ""
+    return str(v)
+
+
+def _snippet(body, n=120):
+    return re.sub(r"\s+", " ", str(body or "")).strip()[:n]
+
+
+def _hex_id(base, n, width=16):
+    return f"{base + n:0{width}x}"
 
 
 class SocialState:
-    """Seeded Google/Discord stand-in: inbox, calendar, channels, outboxes."""
+    """Seeded Google stand-in: inbox, calendar, chat spaces, outboxes."""
+
+    MAIL_ID_BASE = 0x18A0_0000_0000_0000
+    EVT_ID_BASE = 0x6A1C_0000_0000_0000_0000_0000
+    POST_ID_BASE = 7_300_000_000_000_000_000
+    CHAT_ID_BASE = 0x1A2B_0000_0000_0000
 
     def __init__(self, social_setup=None):
         social_setup = social_setup or {}
         self.inbox = [dict(m) for m in social_setup.get("inbox", [])]
-        self.calendar = [dict(e) for e in social_setup.get("calendar", [])]
-        self.discord = {ch.lstrip("#"): [dict(m) for m in msgs]
-                        for ch, msgs in social_setup.get("discord", {}).items()}
-        self.sent = []
-        self.drafts = []
-        self.blog = []
-        self._n = {"sent": 0, "draft": 0, "evt": 0, "post": 0}
+        for m in self.inbox:
+            m.setdefault("date", "Thu, 1 Jan 2026 09:00:00 -0500")
+            m.setdefault("to", "resident")
+        self.calendar = []
+        for n, e in enumerate(social_setup.get("calendar", [])):
+            e = dict(e)
+            e.setdefault("id", _hex_id(self.EVT_ID_BASE, n, 26))
+            if "title" not in e:
+                e["title"] = e.get("summary", "")
+            self.calendar.append(e)
+        # Chat spaces. The old `discord` setup key is accepted so older scenario
+        # files still load, but the tool surface is ChatRead/ChatSend only.
+        spaces = social_setup.get("spaces", social_setup.get("discord", {}))
+        self.spaces = {}
+        for name, msgs in (spaces or {}).items():
+            rows = []
+            for n, m in enumerate(msgs):
+                m = dict(m)
+                m.setdefault("sender", m.get("author", "teammate"))
+                m.setdefault("sender_type", "HUMAN")
+                m.setdefault("createTime", f"2026-01-01T09:{n % 60:02d}:00Z")
+                rows.append(m)
+            self.spaces[str(name)] = rows
+        self.sent = []      # {id, to, subject, body}
+        self.drafts = []    # {id, to, subject, body}
+        self.blog = []      # {id, title, body, status}
+        self._n = {"mail": len(self.inbox), "draft": 0, "evt": len(self.calendar),
+                   "post": 0, "chat": 0}
 
-    def _next_id(self, kind, prefix):
+    def _next_id(self, kind, base, width=16):
+        n = self._n[kind]
         self._n[kind] += 1
-        return f"{prefix}-{self._n[kind]:03d}"
+        return _hex_id(base, n, width)
 
     def _score(self, query, msg):
         hay = f"{msg.get('from', '')} {msg.get('subject', '')} {msg.get('body', '')}".lower()
@@ -57,94 +112,128 @@ class SocialState:
         overlap = sum(1 for t in terms if t in hay)
         return (overlap, difflib.SequenceMatcher(None, q, hay[:400]).ratio())
 
-    def gmail_search(self, query, count=5):
-        if not query or not query.strip():
-            raise ValueError("query cannot be empty")
-        q = query.strip()
+    # ---- Gmail
+
+    def _find(self, message_id):
+        for m in self.inbox:
+            if str(m.get("id")) == str(message_id):
+                return m
+        raise ValueError(f"no message with id {message_id}")
+
+    def gmail_search(self, query, max_results=20):
+        q = _s({"query": query}, "query")
+        limit = max(1, min(int(max_results or 20), 100))
         ranked = sorted(self.inbox, key=lambda m: self._score(q, m), reverse=True)
-        hits = [m for m in ranked if self._score(q, m)[0] > 0][: int(count or 5)]
+        hits = [m for m in ranked if self._score(q, m)[0] > 0][:limit]
         if not hits:
-            return "(no results)"
-        lines = []
-        for i, m in enumerate(hits, 1):
-            lines.append(f"[{i}] ID: {m['id']}\nFrom: {m.get('from', '')}\n"
-                         f"Subject: {m.get('subject', '')}\n{m.get('body', '')[:120]}")
-        return "\n\n".join(lines)
+            return "(no matches)"
+        return "\n".join(
+            f"{m['id']}  {m.get('date', '')}  {m.get('from', '')}  {m.get('subject', '')}\n"
+            f"    {_snippet(m.get('body'))}" for m in hits)
 
     def gmail_read(self, message_id):
-        for m in self.inbox:
-            if m["id"] == message_id:
-                return (f"From: {m.get('from', '')}\nSubject: {m.get('subject', '')}\n\n"
-                        f"{m.get('body', '')}")
-        raise ValueError(f"no such message: {message_id}")
+        m = self._find(_s({"id": message_id}, "id"))
+        return (f"From: {m.get('from', '')}\nTo: {m.get('to', '')}\n"
+                f"Subject: {m.get('subject', '')}\nDate: {m.get('date', '')}\n\n"
+                f"{m.get('body') or '(no plain-text body)'}")
 
     def gmail_send(self, to, subject, body):
-        if not to or not to.strip():
-            raise ValueError("recipient cannot be empty")
-        mid = self._next_id("sent", "sent")
-        self.sent.append({"id": mid, "to": to, "subject": subject or "", "body": body or ""})
-        return f"sent {mid}"
+        to, subject, body = _s({"to": to}, "to"), _s({"subject": subject}, "subject"), \
+            _s({"body": body}, "body")
+        mid = self._next_id("mail", self.MAIL_ID_BASE)
+        self.sent.append({"id": mid, "to": to, "subject": subject, "body": body})
+        return f"tool=GmailSend; to={to}; id={mid}"
 
     def gmail_draft(self, to, subject, body):
-        if not to or not to.strip():
-            raise ValueError("recipient cannot be empty")
-        did = self._next_id("draft", "draft")
-        self.drafts.append({"id": did, "to": to, "subject": subject or "", "body": body or ""})
-        return f"draft saved {did}"
+        to, subject, body = _s({"to": to}, "to"), _s({"subject": subject}, "subject"), \
+            _s({"body": body}, "body")
+        did = self._next_id("draft", self.MAIL_ID_BASE + 0x1000)
+        self.drafts.append({"id": did, "to": to, "subject": subject, "body": body})
+        return f"tool=GmailDraft; to={to}; id={did}"
 
-    def calendar_list(self):
-        if not self.calendar:
-            return "(no events)"
-        rows = sorted(self.calendar, key=lambda e: (e.get("start", ""), e.get("title", "")))
-        return "\n".join(f"{e['id']} | {e.get('title', '')} | "
-                         f"{e.get('start', '')} -> {e.get('end', '')}" for e in rows)
+    # ---- Calendar
 
-    def calendar_create(self, title, start, end):
-        eid = self._next_id("evt", "evt-new")
-        self.calendar.append({"id": eid, "title": title, "start": start, "end": end})
-        return f"created {eid}"
+    def calendar_list(self, max_results=10):
+        limit = max(1, min(int(max_results or 10), 100))
+        rows = sorted(self.calendar, key=lambda e: (e.get("start", ""), e.get("title", "")))[:limit]
+        if not rows:
+            return "(no upcoming events)"
+        out = []
+        for e in rows:
+            line = f"{e.get('start', '')}  {e.get('title', '')}"
+            if e.get("location"):
+                line += f"  [{e['location']}]"
+            out.append(line)
+        return "\n".join(out)
 
-    def blogger_post(self, title, body):
-        pid = self._next_id("post", "post")
-        self.blog.append({"id": pid, "title": title or "", "body": body or ""})
-        return f"posted {pid}"
+    def calendar_create(self, summary, start, end):
+        summary = _s({"summary": summary}, "summary")
+        start, end = _s({"start": start}, "start"), _s({"end": end}, "end")
+        eid = self._next_id("evt", self.EVT_ID_BASE, 26)
+        self.calendar.append({"id": eid, "title": summary, "start": start, "end": end})
+        return f"tool=CalendarCreate; id={eid}; start={start}"
 
-    def _channel(self, channel):
-        name = (channel or "").lstrip("#")
-        if name not in self.discord:
-            raise ValueError(f"no such channel: {channel}")
-        return name
+    # ---- Blogger
 
-    def discord_read(self, channel, limit=20):
-        name = self._channel(channel)
-        msgs = self.discord[name][-int(limit or 20):]
+    def blogger_post(self, title, content_html, draft=True):
+        title = _s({"title": title}, "title")
+        html = _s({"content_html": content_html}, "content_html")
+        is_draft = True if draft is None else bool(draft)
+        n = self._n["post"]
+        self._n["post"] += 1
+        pid = str(self.POST_ID_BASE + n)
+        self.blog.append({"id": pid, "title": title, "body": html,
+                          "status": "draft" if is_draft else "live"})
+        return f"tool=BloggerPost; id={pid}; status={'draft' if is_draft else 'live'}"
+
+    # ---- Google Chat
+
+    def _space(self, space):
+        name = _s({"space": space}, "space")
+        key = name
+        if key not in self.spaces:
+            raise ValueError(f"space not found: {name}")
+        return key
+
+    def chat_read(self, space, page_size=20):
+        key = self._space(space)
+        limit = max(1, min(int(page_size or 20), 100))
+        msgs = self.spaces[key][-limit:][::-1]      # newest first, as the real tool returns
         if not msgs:
             return "(no messages)"
-        return "\n".join(f"{m.get('author', '')}: {m.get('text', '')}" for m in msgs)
+        return "\n".join(
+            f"{m.get('createTime', '')}  {m.get('sender', '')} "
+            f"({m.get('sender_type', 'HUMAN')}): {m.get('text', '')}" for m in msgs)
 
-    def discord_post(self, channel, text):
-        name = self._channel(channel)
-        self.discord[name].append({"author": "resident", "text": text or ""})
-        return f"posted to #{name}"
+    def chat_send(self, space, text):
+        key = self._space(space)
+        body = _s({"text": text}, "text")
+        name = f"{key}/messages/{_hex_id(self.CHAT_ID_BASE, self._n['chat'])}"
+        self._n["chat"] += 1
+        self.spaces[key].append({"sender": "resident", "sender_type": "BOT",
+                                 "text": body, "createTime": "2026-01-01T12:00:00Z"})
+        return f"tool=ChatSend; space={key}; name={name}"
 
 
 def run_social_tool(state, tool, args):
-    if tool == "gmail_search":
-        return state.gmail_search(args["query"], args.get("count", 5))
-    if tool == "gmail_read":
-        return state.gmail_read(args["id"])
-    if tool == "gmail_send":
-        return state.gmail_send(args["to"], args.get("subject", ""), args.get("body", ""))
-    if tool == "gmail_draft":
-        return state.gmail_draft(args["to"], args.get("subject", ""), args.get("body", ""))
-    if tool == "calendar_list":
-        return state.calendar_list()
-    if tool == "calendar_create":
-        return state.calendar_create(args["title"], args["start"], args["end"])
-    if tool == "blogger_post":
-        return state.blogger_post(args.get("title", ""), args["body"])
-    if tool == "discord_read":
-        return state.discord_read(args["channel"], args.get("limit", 20))
-    if tool == "discord_post":
-        return state.discord_post(args["channel"], args["text"])
+    a = args or {}
+    if tool == "GmailSearch":
+        return state.gmail_search(a.get("query"), a.get("max_results", 20))
+    if tool == "GmailRead":
+        return state.gmail_read(a.get("id"))
+    if tool == "GmailSend":
+        return state.gmail_send(a.get("to"), a.get("subject"), a.get("body"))
+    if tool == "GmailDraft":
+        return state.gmail_draft(a.get("to"), a.get("subject"), a.get("body"))
+    if tool == "CalendarList":
+        return state.calendar_list(a.get("max_results", 10))
+    if tool == "CalendarCreate":
+        return state.calendar_create(a.get("summary", a.get("title")), a.get("start"), a.get("end"))
+    if tool == "BloggerPost":
+        return state.blogger_post(a.get("title"), a.get("content_html", a.get("body")),
+                                  a.get("draft"))
+    if tool == "ChatRead":
+        return state.chat_read(a.get("space", a.get("channel")), a.get("page_size", 20))
+    if tool == "ChatSend":
+        return state.chat_send(a.get("space", a.get("channel")), a.get("text"))
     raise ValueError(f"unknown tool {tool}")

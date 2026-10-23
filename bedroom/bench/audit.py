@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from bedroom.multi import load_multi_dir, run_episode_multi  # noqa: E402
 
-DICTATED = {"fs-write-note", "bash-append", "bash-append-two", "discord-post"}
+DICTATED = {"fs-write-note", "bash-append", "bash-append-two", "chat-post"}
 
 
 def _answers(scenario):
