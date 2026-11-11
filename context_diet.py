@@ -651,22 +651,44 @@ def _render(messages: list[dict]) -> str:
     return "\n\n".join(out)
 
 
+def keep_turns() -> int:
+    """Whole exchanges kept verbatim after compaction (context.compact_keep_turns)."""
+    try:
+        import config_loader as CL
+        val = CL.context_setting("compact_keep_turns")
+    except Exception:  # noqa: BLE001
+        return 4
+    if not isinstance(val, int) or isinstance(val, bool) or val < 1:
+        return 4
+    return val
+
+
 def split_for_compaction(
     messages: list[dict],
     tail_tokens: int | None = None,
+    turns: int | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Divide history into (to summarize, to keep verbatim).
 
-    The newest exchanges (see _protected_start) are always kept and do not
-    count against the budget. tail_tokens is the budget for the verbatim
-    material OLDER than them; it defaults to the budget implied by the
-    configured floor, resolved at call time (not import time) so config
-    changes apply. The kept list is older tail + protected block.
+    Default: keep the last N whole exchanges (N = compact_keep_turns, default
+    4), counted from the end, in full, with no token budget. An exchange
+    starts at a user message. Passing tail_tokens explicitly selects the old
+    token-budget behaviour (kept for callers/tests that size by tokens).
     """
     if not messages:
         return [], []
 
-    budget = compact_tail_tokens() if tail_tokens is None else tail_tokens
+    if tail_tokens is None:
+        n = keep_turns() if turns is None else max(1, int(turns))
+        seen = 0
+        for i in range(len(messages) - 1, -1, -1):
+            if messages[i].get("role") == "user" and not messages[i].get("synthetic"):
+                seen += 1
+                if seen == n:
+                    return list(messages[:i]), list(messages[i:])
+        return [], list(messages)  # fewer than N exchanges; nothing to summarize
+
+    budget = tail_tokens
     p = _protected_start(messages)
     cut = p
     for i in range(p - 1, -1, -1):
@@ -769,8 +791,7 @@ def recovery_seed(messages: list[dict], budget_tokens: int | None = None) -> str
     if not hist:
         return ""
 
-    budget = budget_tokens or COMPACT_TAIL_TOKENS
-    _, tail = split_for_compaction(hist, tail_tokens=budget)
+    _, tail = split_for_compaction(hist, tail_tokens=budget_tokens)
     if not tail:
         tail = hist[-6:]
     dropped = len(hist) - len(tail)

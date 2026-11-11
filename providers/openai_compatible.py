@@ -456,7 +456,7 @@ class OpenAICompatibleProvider(Provider):
             return ""
         try:
             import asyncio as _aio
-            import mem0_core
+            import mem0_switch as mem0_core
             hits = await _aio.wait_for(
                 _aio.to_thread(mem0_core.hint, query[:2000]),
                 timeout=30.0)
@@ -468,20 +468,13 @@ class OpenAICompatibleProvider(Provider):
             return ""
         if not hits:
             return ""
-        lines = []
-        for score, made, mem in hits:
-            stamp = f"{made} " if made else ""
-            tag = "[kw] " if score <= 0 else f"[{score:.2f}] "
-            lines.append(f"- {tag}{stamp}{mem}")
         try:
             _log(f"hints: {len(hits)} hit(s), top={hits[0][0]:.2f}, "
                  f"q={query[:80]!r}")
         except Exception:
             pass
-        return ("[memory hints -- auto-retrieved from long-term memory by "
-                "similarity to the message below. Possibly relevant, "
-                "possibly noise; call memory_search for full detail before "
-                "relying on one.]\n" + "\n".join(lines))
+        import hints  # the one renderer; see hints.py
+        return hints.render(hits)
 
     # turn
 

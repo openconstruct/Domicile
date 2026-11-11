@@ -28,7 +28,7 @@ def _ipc(op: str, args: dict) -> str:
 
 
 def _direct(op: str, args: dict) -> str:
-    import mem0_core as core
+    import mem0_switch as core
     try:
         if op == "search":
             return core.search(args.get("query", ""), int(args.get("limit", 5)))

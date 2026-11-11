@@ -71,14 +71,35 @@ class FloorTest(unittest.TestCase):
                                     compact_floor_tokens=40_000),
                          40_000 + cd.COMPACT_HEADROOM)
 
-    def test_split_uses_floor_at_call_time(self):
+    def test_split_keeps_configured_turns_at_call_time(self):
+        # 40 messages = 20 exchanges of ~1.4k tokens each; the count rules,
+        # whatever the token size.
         msgs = [{"role": "user" if i % 2 == 0 else "assistant",
-                 "text": "x" * 4_000} for i in range(40)]   # ~1.4k tok each
-        small = self._with(lambda: cd.split_for_compaction(msgs)[1],
-                           compact_floor_tokens=12_000)
-        big = self._with(lambda: cd.split_for_compaction(msgs)[1],
-                         compact_floor_tokens=40_000)
-        self.assertGreater(len(big), len(small))
+                 "text": "x" * 4_000} for i in range(40)]
+        three = self._with(lambda: cd.split_for_compaction(msgs)[1],
+                           compact_keep_turns=3)
+        six = self._with(lambda: cd.split_for_compaction(msgs)[1],
+                         compact_keep_turns=6)
+        self.assertEqual((len(three), len(six)), (6, 12))
+        self.assertEqual(three[0]["role"], "user")
+
+    def test_split_keeps_long_turns_whole(self):
+        # four 40k-char exchanges (way past any token budget) all survive
+        msgs = [{"role": "user" if i % 2 == 0 else "assistant",
+                 "text": "y" * 40_000} for i in range(30)]
+        head, tail = cd.split_for_compaction(msgs, turns=4)
+        self.assertEqual(len(tail), 8)
+        self.assertEqual(tail, msgs[-8:])
+        self.assertEqual(head, msgs[:-8])
+
+    def test_split_fewer_turns_than_keep_summarizes_nothing(self):
+        msgs = [{"role": "user", "text": "a"}, {"role": "assistant", "text": "b"}]
+        self.assertEqual(cd.split_for_compaction(msgs, turns=4), ([], msgs))
+
+    def test_garbage_keep_turns_falls_back(self):
+        for bad in ("big", 0, -1, True, None):
+            self.assertEqual(self._with(cd.keep_turns,
+                                        compact_keep_turns=bad), 4)
 
 
 def _convo(n_exchanges, chars=4_000):

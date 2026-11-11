@@ -49,7 +49,7 @@ def run(path, add=None) -> dict:
     """`add(text, metadata, key)` is injectable for tests; default is mem0_core."""
     items = load(path)
     if add is None:
-        import mem0_core as core
+        import mem0_switch as core
 
         def add(text, meta, key):
             return core.add(text, extract=False, metadata=meta, idempotency_key=key)

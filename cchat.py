@@ -266,19 +266,38 @@ def builtin_tools_enabled(mode: str | None = None) -> bool:
 
 def local_fs_for_mode(mode: str) -> list:
     """Which local_tools filesystem/shell tools this mode may use on Claude."""
+    return [n for n in phase_for_mode(mode) if n in LOCAL_FS_TOOLS]
+
+
+def phase_for_mode(mode: str) -> list:
+    """The mode's resolved local tool tier, e.g. ['Read', 'Glob', 'Grep'] for audit."""
     try:
         from providers import tools_for_mode
         spec = tools_for_mode(mode)
     except Exception:
         spec = "full"
-    return [n for n in local_tools.resolve_phase(spec) if n in LOCAL_FS_TOOLS]
+    return local_tools.resolve_phase(spec)
+
+
+def extras_for_tier(names: list) -> list:
+    """MCP memory tools, plus the optional local tools this tier declares.
+
+    Web and the expression pane used to be appended unconditionally, which
+    quietly handed a web tool to any tier that excluded it. They are gated on
+    the resolved tier now -- the audit tier must not receive a network tool."""
+    out = list(_MCP_TOOLS)
+    if "ExpressToPane" in names:
+        out.append(EXPRESSION_TOOL)
+    if "WebSearch" in names or "WebFetch" in names:
+        out.extend(WEB_TOOLS)
+    return out
 
 
 def allowed_tools_for_mode(mode: str) -> list:
     """Resolve config's per-mode tool spec to an allowed_tools list."""
     if not builtin_tools_enabled(mode):
-        return ([_local_mcp(n) for n in local_fs_for_mode(mode)]
-                + _MCP_TOOLS + [EXPRESSION_TOOL] + WEB_TOOLS)
+        names = phase_for_mode(mode)
+        return [_local_mcp(n) for n in names if n in LOCAL_FS_TOOLS] + extras_for_tier(names)
     try:
         from providers import tools_for_mode
         spec = tools_for_mode(mode)
@@ -291,7 +310,7 @@ def allowed_tools_for_mode(mode: str) -> list:
         base = [t for t in spec if t in known]
     else:
         base = _PHASE_TOOLS_ANTHROPIC["full"]
-    return list(base) + _MCP_TOOLS + [EXPRESSION_TOOL] + WEB_TOOLS
+    return list(base) + extras_for_tier(base)
 
 # mem0
 MEM0_VENV_PYTHON = Path.home() / ".mem0-venv" / "bin" / "python"
@@ -976,38 +995,18 @@ async def summarize_for_compaction(prompt: str, max_tokens: int) -> str:
     return text
 
 
-HINT_SNIPPET_WORDS = 20
-
-
-def _hint_snippet(mem: str, limit: int = HINT_SNIPPET_WORDS) -> str:
-    """Clip a stored memory to a short teaser for the ambient hint block."""
-    words = (mem or "").split()
-    if len(words) <= limit:
-        return mem or ""
-    return " ".join(words[:limit]) + " …"
-
-
 async def _ambient_hints(raw_text: str) -> str:
     query = (raw_text or "").strip()
     if not query:
         return ""
     try:
-        import mem0_core
+        import mem0_switch as mem0_core
         hits = await asyncio.wait_for(
             asyncio.to_thread(mem0_core.hint, query[:2000]), timeout=30.0)
     except Exception:
         return ""
-    if not hits:
-        return ""
-    lines = []
-    for score, made, mem in hits:
-        stamp = f"{made} " if made else ""
-        tag = "[kw] " if score <= 0 else f"[{score:.2f}] "
-        lines.append(f"- {tag}{stamp}{_hint_snippet(mem)}")
-    return ("[memory hints — auto-retrieved from long-term memory by "
-            "similarity to the message below. Possibly relevant, possibly "
-            "noise; call memory_search for full detail before relying on "
-            "one.]\n" + "\n".join(lines))
+    import hints
+    return hints.render(hits)
 
 
 RSS_LATEST_FILE = RSS_LATEST
@@ -2914,7 +2913,7 @@ class CCChat(App):
                                                  name="mem0-ipc-serve")
 
         def _warm():
-            import mem0_core
+            import mem0_switch as mem0_core
             mem0_core.store()
 
         try:

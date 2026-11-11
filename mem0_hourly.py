@@ -56,6 +56,19 @@ def _is_limit(text: str) -> bool:
     return any(m in low for m in _LIMIT_MARKERS)
 
 
+def _looks_extracted(text: str) -> bool:
+    """A successful extraction (ADD/UPDATE/DELETE lines or 'no new facts').
+
+    Extracted facts can quote 'usage limit' from the source chunk; that is
+    content, not an API failure, and must not trip the limit hold.
+    """
+    for ln in (text or "").splitlines():
+        s = ln.strip()
+        if s.startswith(("ADD", "UPDATE", "DELETE")) or s.lower().startswith("no new facts"):
+            return True
+    return False
+
+
 def _is_busy(text: str) -> bool:
     """A transient store failure, as opposed to a bad chunk."""
     low = (text or "").lower()
@@ -129,6 +142,7 @@ def _add_with_retry(chunk_text: str, metadata: dict) -> tuple[str, str]:
     def _call():
         return mem0_ipc.call("add", {"text": chunk_text,
                                      "extract": True,
+                                     "guard": True,
                                      "metadata": metadata},
                              timeout=300.0)
 
@@ -265,7 +279,7 @@ def _drain_file(path: Path, header: str, metadata: dict, fst: dict,
             completed = False
             break
         busy_streak = 0
-        if _is_limit(result):
+        if _is_limit(result) and not _looks_extracted(result):
             summary["held"] = True
             summary["reason"] = f"usage limit, {path.name} {i}/{total}"
             _log(f"   [{i}/{total}] usage limit; holding offset")

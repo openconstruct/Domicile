@@ -25,7 +25,11 @@ class Mem0IpcNoListener(Mem0IpcDown):
 # server
 
 def _dispatch_to_core(op: str, args: dict):
-    import mem0_core as core
+    return _dispatch_legacy(op, args)
+
+
+def _dispatch_legacy(op: str, args: dict):
+    import mem0_switch as core
 
     if op == "hint":
         return core.hint(

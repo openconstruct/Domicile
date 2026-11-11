@@ -32,6 +32,10 @@ state = tmp / "state.json"
 # must not write a fake "nothing new" into the live hourly-ingest-status.json.
 H.DONE_DIR = tmp / "hourly-done"
 H.STATUS_PATH = tmp / "hourly-status.json"
+# And the close-out bucket: rollover MOVES day files there. Unredirected, a
+# direct run overwrote the real ingested/2026-09-08.log and 09-09.log with
+# these fixtures (found 2026-11-11; text recovered from mem2's qdrant copy).
+H.INGESTED_DIR = tmp / "ingested"
 
 # Stub the store: every chunk "extracts" two facts, except chunks containing
 # POISON which return a server-side dispatch failure, and chunks containing
@@ -130,6 +134,26 @@ check("fail: never advances, held on all ticks",
 check("fail: escalates to poison chunk",
       "poison chunk" in holds[2][3] and "poison chunk" in holds[3][3],
       str(holds))
+
+# --- 6b. extracted facts that merely QUOTE "usage limit" must not hold
+log_dir6 = tmp / "logs6"
+log_dir6.mkdir()
+state6 = tmp / "state6.json"
+(log_dir6 / "2026-09-09.log").write_text("Chunk QUOTELIMIT here.\n\nTail.\n\n")
+_orig_fake = fake_add
+def fake_quote(chunk_text, metadata):
+    if "QUOTELIMIT" in chunk_text:
+        return ("ok", "ADD: ingest failed on a usage limit around 10-25")
+    if "REALLIMIT" in chunk_text:
+        return ("ok", "RuntimeError: usage limit reached")
+    return _orig_fake(chunk_text, metadata)
+H._add_with_retry = lambda c, m: fake_quote(c, m)
+s = H.run_once(log_dir=log_dir6, state_path=state6, now=now_y)
+check("quoted 'usage limit' in facts: not held", s["chunks_done"] == 1 and not s["held"], str(s))
+(log_dir6 / "2026-09-10.log").write_text("Chunk REALLIMIT here.\n\nTail.\n\n")
+s = H.run_once(log_dir=log_dir6, state_path=state6, now=datetime(2026, 9, 11, 1, 0, 0))
+check("genuine limit error: still held", s["held"] and "usage limit" in s["reason"], str(s))
+H._add_with_retry = lambda chunk_text, metadata: fake_add(chunk_text, metadata)
 
 # --- 7. never raises on garbage input
 (t3).write_bytes(b"\x00\x01\x02 broken utf8: \xff\xfe")

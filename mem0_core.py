@@ -96,7 +96,9 @@ LOCK_TIMEOUT_SECONDS = 15
 
 ALL_ROWS = 100000
 
-HINT_THRESHOLD = 0.71
+# 0.66 = 0.71 recalibrated for BM25 pass off (calib_hint.py, 2026-11-07:
+# 93 vs 92 hints over 32 queries; scores run ~0.15 lower without the boost)
+HINT_THRESHOLD = 0.66
 HINT_LIMIT = 3
 
 HINT_RECENCY_BONUS = 0.06
@@ -289,6 +291,11 @@ def store() -> Memory:
             _memory = Memory.from_config(CONFIG)
             _memory.llm = ChainLLM(MEM0_LLM_CHAIN)
             _memory.llm._active()      # fail loudly here, not mid-extraction
+            if os.environ.get("MEM0_BM25") != "1":
+                # mem0's own BM25 pass cost ~1s/search and only re-weights
+                # dense candidates; our FTS5 RRF layer supplies keywords.
+                # keyword_search -> None is mem0's supported "no bm25" path.
+                _memory.vector_store.keyword_search = lambda *a, **k: None
             return _memory
         except RuntimeError as exc:
             if "already accessed" not in str(exc):
@@ -597,7 +604,11 @@ def search(query: str, limit: int = 5) -> str:
     query = (query or "").strip()
     if not query:
         return "empty query"
-    _maybe_sync_fts(force=True)
+    # Not forced: _invalidate_fts() is already called by add/add_verbatim/
+    # mark_superseded, and every writer (nightly, hourly drain) goes through
+    # IPC into this process, so the mirror cannot go stale behind our back.
+    # Forcing it here cost a full get_all() of the collection per search.
+    _maybe_sync_fts()
     limit = max(1, limit)
     ranked = _hybrid(query, max(limit * 3, 12))
     for s in ranked:

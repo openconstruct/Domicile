@@ -228,6 +228,17 @@ def check_hourly_ingest() -> Check:
 
 
 def check_mem0_store(live: bool = False) -> Check:
+    import mem0_switch
+    if mem0_switch.flash():
+        from mem0_v2 import DB_PATH
+        if not DB_PATH.exists():
+            # A fresh install creates flash.db on first write, so absence is
+            # only a warning until something has been remembered.
+            return Check("mem0_store", WARN, f"flash memory on, {DB_PATH.name} not created yet")
+        if not SOCKET_PATH.exists():
+            return Check("mem0_store", FAIL if live else WARN,
+                         f"IPC socket absent ({SOCKET_PATH.name}) -- memory tools unreachable")
+        return Check("mem0_store", OK, "flash memory present, socket live")
     if not QDRANT_PATH.exists():
         return Check("mem0_store", FAIL, f"qdrant dir missing: {QDRANT_PATH}")
     try:

@@ -51,11 +51,11 @@ INTERVAL_SECONDS = int(os.environ.get("CCHAT_BACKUP_INTERVAL", 24 * 3600))
 BACKUP_HOUR = os.environ.get("CCHAT_BACKUP_HOUR", "")
 
 SQLITE_SOURCES = [
+    (MEM0_DIR / "flash.db", "mem0/flash.db.gz"),
     (MEM0_DIR / "history.db", "mem0/history.db.gz"),
     (MEM0_DIR / "qdrant" / "collection" / "ccchat" / "storage.sqlite",
      "mem0/qdrant-ccchat-storage.sqlite.gz"),
-    (MEM0_DIR / "qdrant-mem2" / "collection" / "cchat-mem2" / "storage.sqlite",
-     "mem0/qdrant-mem2-cchat-mem2-storage.sqlite.gz"),
+    (MEM0_DIR / "mem2.db", "mem0/mem2.db.gz"),
 ]
 
 PLAIN_DIRS = [
@@ -67,8 +67,6 @@ PLAIN_FILES = [
     (MEM0_DIR / "config.json", "mem0/config.json"),
     (MEM0_DIR / "qdrant" / "meta.json", "mem0/qdrant-meta.json"),
     (MEM0_DIR / "nightly-state.json", "mem0/nightly-state.json"),
-    (MEM0_DIR / "qdrant-mem2" / "meta.json", "mem0/qdrant-mem2-meta.json"),
-    (MEM0_DIR / "mem2-index-state.json", "mem0/mem2-index-state.json"),
 ]
 
 TAR_DIRS = [
@@ -115,8 +113,8 @@ def sha256(path: Path) -> str:
 
 
 def read_tokens() -> dict[str, str]:
-    token = credentials.get("GITHUB_TOKEN")
-    return {"github": token} if token else {}
+    return {name: value for name in ("github", "gitlab")
+            if (value := credentials.get(f"{name.upper()}_TOKEN"))}
 
 
 # snapshotting
@@ -258,15 +256,14 @@ The placement map, for reference / manual recovery:
 |-----------------------------------------------|-------------------------------------------------------|
 | `memory/*.md`                                 | `<install-dir>/data/memory/`                             |
 | `chats.tar.gz`                                | untar into `<install-dir>/data/chats/`                      |
+| `mem0/flash.db.gz`                            | gunzip to `<install-dir>/data/mem0/flash.db` (flash memory) |
 | `mem0/history.db.gz`                          | gunzip to `<install-dir>/data/mem0/history.db`              |
 | `mem0/qdrant-ccchat-storage.sqlite.gz`        | gunzip to `<install-dir>/data/mem0/qdrant/collection/ccchat/storage.sqlite` |
-| `mem0/qdrant-mem2-cchat-mem2-storage.sqlite.gz` | gunzip to `<install-dir>/data/mem0/qdrant-mem2/collection/cchat-mem2/storage.sqlite` |
+| `mem0/mem2.db.gz`                             | gunzip to `<install-dir>/data/mem0/mem2.db` (full memory)   |
 | `mem0/logs/**/*.log`                          | `<install-dir>/data/mem0/logs/` (preserving the `ingested/` subdir) |
 | `mem0/config.json`                            | `<install-dir>/data/mem0/config.json`                       |
 | `mem0/qdrant-meta.json`                       | `<install-dir>/data/mem0/qdrant/meta.json`                  |
-| `mem0/qdrant-mem2-meta.json`                  | `<install-dir>/data/mem0/qdrant-mem2/meta.json`             |
 | `mem0/nightly-state.json`                     | `<install-dir>/data/mem0/nightly-state.json`                |
-| `mem0/mem2-index-state.json`                  | `<install-dir>/data/mem0/mem2-index-state.json`             |
 
 `MANIFEST.json` holds a sha256 for every file. `--restore` verifies all of
 them and refuses to proceed on a mismatch, so a silently-corrupted archive
@@ -274,8 +271,8 @@ fails at restore time rather than being trusted.
 
 Only `memory/*.md` is truly irreplaceable. `mem0/` is derived from `chats/`
 and can be rebuilt by re-running nightly ingestion, at the cost of the model
-calls. The daily logs (`mem0/logs/*.log`) are the source for mem2's semantic
-search index.
+calls. The daily logs (`mem0/logs/*.log`) are the source for mem2's search index
+(`mem2.db`), which rebuilds from them if lost, at the cost of re-embedding.
 """
 
 

@@ -21,7 +21,7 @@ def main():
             credentials.save({'FIXTURE_API_KEY': "literal$VALUE#with'quote",
                               'GITHUB_TOKEN': 'fixture-github',
                               'GITLAB_TOKEN': 'fixture-gitlab',
-                              'CODEBERG_TOKEN': 'fixture-codeberg'})  # only GitHub is a backup target
+                              'CODEBERG_TOKEN': 'fixture-codeberg'})  # GitHub and GitLab are backup targets
             assert env.stat().st_mode & 0o777 == 0o600
             with patch.dict(os.environ, {'FIXTURE_API_KEY': 'stale-process-value'}):
                 assert read_key(str(legacy)) == "literal$VALUE#with'quote"
@@ -34,7 +34,7 @@ def main():
             assert credentials.get('FIXTURE_API_KEY') == "literal$VALUE#with'quote"
             discord_bridge.save_config('replacement', 123)
             assert discord_bridge.load_config() == ('replacement', 123, None, False)
-            assert backup.read_tokens() == {'github': 'fixture-github'}
+            assert backup.read_tokens() == {'github': 'fixture-github', 'gitlab': 'fixture-gitlab'}  # codeberg is ignored
             credentials.save({'FIXTURE_API_KEY': ''})
             assert not config_loader.key_available('fixture', cfg)
             try:

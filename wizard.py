@@ -802,9 +802,11 @@ class WizardApp(App):
     def __init__(self, mem0_add=None):
         super().__init__()
         self.answers: dict = {}
-        self.mem0_add = mem0_add      # None -> real mem0_core; tests inject a stub
+        self.mem0_add = mem0_add      # None -> the live memory backend (mem0_switch); tests inject a stub
 
     def on_mount(self):
+        import mem0_switch      # before Import, so imported memories land in flash
+        mem0_switch.enable_for_new_install()
         self.push_screen(Welcome())
 
 

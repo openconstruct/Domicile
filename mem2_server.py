@@ -4,13 +4,12 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 import os
 import re
 import sqlite3
 import sys
-import time
+import threading
 from datetime import date
 from pathlib import Path
 
@@ -18,10 +17,10 @@ os.environ.setdefault("MEM0_TELEMETRY", "false")
 
 from mcp.server import MCPServer
 
-from paths import MEM0_DIR as MEM2_DIR, QDRANT_MEM2_PATH as QDRANT_PATH, \
-    MEM2_FTS_PATH as FTS_PATH, MEM2_INDEX_STATE as INDEX_STATE, \
-    MEM2_FTS_STATE as FTS_STATE, MEM0_LOG_DIR as LOG_DIR, \
-    INGESTED_DIR
+import numpy as np
+
+from paths import MEM2_DB_PATH as DB_PATH, QDRANT_MEM2_PATH as LEGACY_QDRANT, \
+    MEM0_LOG_DIR as LOG_DIR, INGESTED_DIR
 
 
 def _log_paths() -> list[Path]:
@@ -29,8 +28,9 @@ def _log_paths() -> list[Path]:
     if not INGESTED_DIR.exists():
         return []
     return sorted(INGESTED_DIR.glob("*.log"))
-COLLECTION = "cchat-mem2"
-EMBED_MODEL = "BAAI/bge-small-en-v1.5"
+# The model that made the stored vectors is stamped in the db and checked on
+# open; changing this needs `mem2_server.py --reembed`, never a plain restart.
+EMBED_MODEL = os.environ.get("MEM2_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 EMBED_DIMS = 384
 CHUNK_TARGET_TOKENS = 800  # ~3200 chars, natural split at compaction boundaries
 _EMBED_BATCH = 256
@@ -64,106 +64,89 @@ mcp = MCPServer("mem2")
 # indexing
 
 _embedder = None
-_client = None
-_indexed_files: dict[str, float] | None = None  # path -> mtime when last indexed
-_collection_ready = False
-
-_fts_db: sqlite3.Connection | None = None
-_fts_ok: bool | None = None            # None = untried, True/False = FTS5 usable
-_fts_indexed: dict[str, float] | None = None  # path -> mtime when last FTS-indexed
-
-
-def _load_index_state() -> dict[str, float]:
-    global _indexed_files
-    if _indexed_files is None:
-        try:
-            _indexed_files = json.loads(INDEX_STATE.read_text())
-        except Exception:
-            _indexed_files = {}
-    return _indexed_files
-
-
-def _save_index_state() -> None:
-    try:
-        INDEX_STATE.parent.mkdir(parents=True, exist_ok=True)
-        tmp = INDEX_STATE.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(_indexed_files or {}, indent=1))
-        tmp.replace(INDEX_STATE)
-    except Exception:
-        pass  # a lost cursor costs a re-index, not data
+_db: sqlite3.Connection | None = None
+_lock = threading.RLock()
+_matrix = None  # (point_ids int64[n], dates str[n], vectors float32[n, d]) or None = reload
 
 
 def _point_id(source_file: str, chunk_index: int) -> int:
     digest = hashlib.md5(f"{source_file}:{chunk_index}".encode()).hexdigest()
-    return int(digest[:15], 16)
+    return int(digest[:15], 16)  # 60 bits: fits sqlite's signed int64 rowid
 
 
-def _load_fts_state() -> dict[str, float]:
-    global _fts_indexed
-    if _fts_indexed is None:
-        try:
-            _fts_indexed = json.loads(FTS_STATE.read_text())
-        except Exception:
-            _fts_indexed = {}
-    return _fts_indexed
+# One sqlite file holds everything. `chunks` is the FTS5 keyword index and the
+# text store; its rowid IS the point id, so lookups by id never scan. `vecs`
+# holds one unit-normalised float32 vector per chunk. `files` is the index
+# cursor, written in the same transaction as the rows it describes, so a crash
+# cannot leave text and vectors disagreeing about what was indexed.
+_SCHEMA = """
+CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5(
+    text, chat_title,
+    date UNINDEXED, chat_id UNINDEXED,
+    source_file UNINDEXED, chunk_index UNINDEXED,
+    tokenize='unicode61');
+CREATE TABLE IF NOT EXISTS vecs (
+    point_id INTEGER PRIMARY KEY,
+    source_file TEXT NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    embedding BLOB NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_vecs_file ON vecs(source_file);
+CREATE TABLE IF NOT EXISTS files (source_file TEXT PRIMARY KEY, mtime REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS store_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+"""
 
 
-def _save_fts_state() -> None:
+def open_db(path: Path, embed_model: str | None = None) -> sqlite3.Connection:
+    """Open (or create) a mem2 db and check its embedder stamp."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(str(path), check_same_thread=False)
+    db.execute("PRAGMA journal_mode=WAL")
     try:
-        FTS_STATE.parent.mkdir(parents=True, exist_ok=True)
-        tmp = FTS_STATE.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(_fts_indexed or {}, indent=1))
-        tmp.replace(FTS_STATE)
-    except Exception:
-        pass
-
-
-def _get_fts() -> sqlite3.Connection | None:
-    global _fts_db, _fts_ok
-    if _fts_ok is False:
-        return None
-    if _fts_db is not None:
-        return _fts_db
-    try:
-        FTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        db = sqlite3.connect(str(FTS_PATH), check_same_thread=False)
-        db.execute("PRAGMA journal_mode=WAL")
-        db.execute(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS chunks USING fts5("
-            "  text, chat_title,"
-            "  date UNINDEXED, chat_id UNINDEXED,"
-            "  source_file UNINDEXED, chunk_index UNINDEXED, point_id UNINDEXED,"
-            "  tokenize='unicode61'"
-            ")"
-        )
-        db.commit()
-        _fts_db, _fts_ok = db, True
-        return db
+        db.executescript(_SCHEMA)
     except sqlite3.OperationalError as exc:
-        sys.stderr.write(f"mem2: FTS5 unavailable ({exc}); semantic-only\n")
-        _fts_ok = False
-        return None
+        db.close()
+        raise RuntimeError(f"mem2 needs SQLite with FTS5: {exc}") from exc
+    if embed_model is not None:
+        check_embedder(db, embed_model)
+    return db
 
 
-def _fts_write(files: list[tuple[str, list[dict]]]) -> None:
-    """Rewrite FTS rows for the given (source_file, chunks) pairs."""
-    db = _get_fts()
-    if db is None:
+def get_meta(db: sqlite3.Connection, key: str) -> str | None:
+    row = db.execute("SELECT value FROM store_meta WHERE key=?", (key,)).fetchone()
+    return row[0] if row else None
+
+
+def set_meta(db: sqlite3.Connection, key: str, value: str) -> None:
+    db.execute("INSERT INTO store_meta(key, value) VALUES (?, ?) "
+               "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, value))
+
+
+def check_embedder(db: sqlite3.Connection, name: str) -> None:
+    # Dim cannot tell bge-small from MiniLM-L6 (both 384), so the model name is
+    # the only guard against ranking one model's query against another's rows.
+    have = get_meta(db, "embedder")
+    if have == name:
         return
-    with db:
-        for source_file, chunks in files:
-            db.execute("DELETE FROM chunks WHERE source_file = ?", (source_file,))
-            db.executemany(
-                "INSERT INTO chunks"
-                " (text, chat_title, date, chat_id, source_file, chunk_index, point_id)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [
-                    (c["text"], c["chat_title"], c["date"], c["chat_id"],
-                     c["source_file"], c["chunk_index"],
-                     _point_id(c["source_file"], c["chunk_index"]))
-                    for c in chunks
-                ],
-            )
+    n = db.execute("SELECT count(*) FROM vecs").fetchone()[0]
+    if have is None and n == 0:
+        with db:
+            set_meta(db, "embedder", name)  # fresh store: first embedder wins
+        return
+    raise RuntimeError(
+        f"mem2 embedder mismatch: {DB_PATH.name} vectors were made by {have!r}, "
+        f"this process embeds with {name!r}. Run `python3 mem2_server.py --reembed`.")
+
+
+def _get_db() -> sqlite3.Connection:
+    global _db
+    if _db is None:
+        if not DB_PATH.exists() and (LEGACY_QDRANT / "collection").exists():
+            raise RuntimeError(
+                f"mem2 has a legacy qdrant store at {LEGACY_QDRANT} and no {DB_PATH.name}. "
+                f"Run `python3 mem2_migrate.py` once to carry its vectors over.")
+        _db = open_db(DB_PATH, EMBED_MODEL)
+    return _db
 
 
 def _fts_match_query(query: str) -> str | None:
@@ -189,27 +172,61 @@ def _get_embedder():
     return _embedder
 
 
-def _get_client():
-    global _client
-    if _client is None:
-        from qdrant_client import QdrantClient
-        QDRANT_PATH.mkdir(parents=True, exist_ok=True)
-        _client = QdrantClient(path=str(QDRANT_PATH))
-    return _client
+def _unit(vectors) -> np.ndarray:
+    m = np.asarray(vectors, dtype=np.float32)
+    if m.ndim == 1:
+        m = m[None, :]
+    norms = np.linalg.norm(m, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return m / norms
 
 
-def _ensure_collection():
-    global _collection_ready
-    if _collection_ready:
-        return
-    client = _get_client()
-    existing = [c.name for c in client.get_collections().collections]
-    if COLLECTION not in existing:
-        client.create_collection(
-            collection_name=COLLECTION,
-            vectors_config={"size": EMBED_DIMS, "distance": "Cosine"},
-        )
-    _collection_ready = True
+def _embed(texts: list[str]) -> np.ndarray:
+    return _unit(list(_get_embedder().embed(texts)))
+
+
+def _load_matrix():
+    global _matrix
+    with _lock:
+        if _matrix is None:
+            rows = _get_db().execute(
+                "SELECT point_id, date, embedding FROM vecs ORDER BY point_id").fetchall()
+            ids = np.array([r[0] for r in rows], dtype=np.int64)
+            dates = np.array([r[1] for r in rows], dtype=object)
+            vecs = (np.vstack([np.frombuffer(r[2], dtype=np.float32) for r in rows])
+                    if rows else np.empty((0, 0), dtype=np.float32))
+            _matrix = (ids, dates, vecs)
+        return _matrix
+
+
+def write_file_chunks(db: sqlite3.Connection, source_file: str, mtime: float,
+                      chunks: list[dict], vectors: np.ndarray) -> None:
+    """Replace one file's rows (text + vectors + cursor) in one transaction."""
+    assert len(chunks) == len(vectors), (source_file, len(chunks), len(vectors))
+    with db:
+        delete_file(db, source_file)
+        db.executemany(
+            "INSERT INTO chunks (rowid, text, chat_title, date, chat_id, source_file, chunk_index)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [(_point_id(c["source_file"], c["chunk_index"]), c["text"], c["chat_title"],
+              c["date"], c["chat_id"], c["source_file"], c["chunk_index"]) for c in chunks])
+        db.executemany(
+            "INSERT INTO vecs (point_id, source_file, chunk_index, date, embedding)"
+            " VALUES (?, ?, ?, ?, ?)",
+            [(_point_id(c["source_file"], c["chunk_index"]), c["source_file"],
+              c["chunk_index"], c["date"], np.asarray(v, dtype=np.float32).tobytes())
+             for c, v in zip(chunks, vectors)])
+        db.execute("INSERT INTO files(source_file, mtime) VALUES (?, ?) "
+                   "ON CONFLICT(source_file) DO UPDATE SET mtime=excluded.mtime",
+                   (source_file, mtime))
+
+
+def delete_file(db: sqlite3.Connection, source_file: str) -> None:
+    # chunks.source_file is UNINDEXED, so go through vecs' index to the rowids.
+    db.execute("DELETE FROM chunks WHERE rowid IN "
+               "(SELECT point_id FROM vecs WHERE source_file=?)", (source_file,))
+    db.execute("DELETE FROM vecs WHERE source_file=?", (source_file,))
+    db.execute("DELETE FROM files WHERE source_file=?", (source_file,))
 
 
 def _split_text(text: str, target_chars: int = CHUNK_TARGET_TOKENS * 4) -> list[str]:
@@ -285,119 +302,80 @@ def _parse_log(path: Path) -> list[dict]:
 
 
 def _index_logs():
-    _ensure_collection()
+    global _matrix
+    db = _get_db()
+    corpus = {str(p): p for p in _log_paths()}
+    seen = dict(db.execute("SELECT source_file, mtime FROM files"))
 
-    q_state = _load_index_state()
-    fts_state = _load_fts_state()
-    fts_available = _get_fts() is not None
-    log_files = _log_paths()
-
-    q_pending: list[tuple[str, float, list[dict]]] = []   # (key, mtime, chunks)
-    fts_files: list[tuple[str, list[dict]]] = []          # per-file chunks needing FTS rewrite
-    for path in log_files:
+    gone = [f for f in seen if f not in corpus]
+    pending = []
+    for key, path in corpus.items():
         mtime = path.stat().st_mtime
-        key = str(path)
-        q_stale = q_state.get(key, 0) < mtime
-        fts_stale = fts_available and fts_state.get(key, 0) < mtime
-        if not q_stale and not fts_stale:
-            continue
-        chunks = _parse_log(path)
-        if q_stale:
-            q_pending.append((key, mtime, chunks))
-        if fts_stale:
-            fts_files.append((key, chunks))
-            fts_state[key] = mtime
+        if seen.get(key, 0) < mtime:
+            pending.append((key, mtime, _parse_log(path)))
+    if not gone and not pending:
+        return
 
-    if q_pending:
-        from qdrant_client.models import PointStruct
-        embedder = _get_embedder()
-        client = _get_client()
-        total = sum(len(c) for _, _, c in q_pending)
+    with _lock:
+        if gone:
+            with db:
+                for f in gone:
+                    delete_file(db, f)
+        total = sum(len(c) for _, _, c in pending)
         done = 0
-        group: list[tuple[str, float, list[dict]]] = []
-        group_n = 0
-
-        def _flush(grp):
-            nonlocal done
-            if not grp:
-                return
-            chunks = [c for _, _, cs in grp for c in cs]
-            vectors = list(embedder.embed([c["text"] for c in chunks]))
-            points = [
-                PointStruct(
-                    id=_point_id(ch["source_file"], ch["chunk_index"]),
-                    vector=vec,
-                    payload={
-                        "text": ch["text"], "date": ch["date"],
-                        "chat_id": ch["chat_id"], "chat_title": ch["chat_title"],
-                        "source_file": ch["source_file"],
-                        "chunk_index": ch["chunk_index"],
-                    },
-                )
-                for ch, vec in zip(chunks, vectors)
-            ]
-            client.upsert(collection_name=COLLECTION, points=points)
-            for k, mt, cs in grp:
-                q_state[k] = mt
-            _save_index_state()
+        for key, mtime, chunks in pending:
+            vectors = (np.vstack([_embed([c["text"] for c in chunks[k:k + _EMBED_BATCH]])
+                                  for k in range(0, len(chunks), _EMBED_BATCH)])
+                       if chunks else np.empty((0, EMBED_DIMS), dtype=np.float32))
+            write_file_chunks(db, key, mtime, chunks, vectors)
             done += len(chunks)
-            print(f"  mem2 index: {done}/{total} chunks", flush=True)
-
-        for item in q_pending:
-            group.append(item)
-            group_n += len(item[2])
-            if group_n >= _EMBED_BATCH:
-                _flush(group)
-                group, group_n = [], 0
-        _flush(group)
-
-    if fts_files:
-        _fts_write(fts_files)
-        _save_fts_state()
+            if total >= _EMBED_BATCH:
+                print(f"  mem2 index: {done}/{total} chunks", flush=True)
+        _matrix = None
 
 
 # search
 
 def _semantic_search(query: str, limit: int, date_from: str | None,
                      date_to: str | None) -> list[dict]:
-    """qdrant / bge pass. Returns normalised chunk dicts, best first."""
-    embedder = _get_embedder()
-    client = _get_client()
-    q_vector = list(embedder.embed([query]))[0]
-
-    must = []
+    """Vector pass: exact cosine over the in-RAM matrix. Best first."""
+    ids, dates, vecs = _load_matrix()
+    if not len(ids):
+        return []
+    scores = vecs @ _embed([query])[0]
+    mask = np.ones(len(ids), dtype=bool)
     if date_from:
-        must.append({"key": "date", "range": {"gte": date_from}})
+        mask &= dates >= date_from
     if date_to:
-        must.append({"key": "date", "range": {"lte": date_to}})
-    from qdrant_client.models import Filter
-    query_filter = Filter(must=must) if must else None
-
-    results = client.query_points(
-        collection_name=COLLECTION,
-        query=q_vector,
-        limit=int(limit),
-        query_filter=query_filter,
-    )
+        mask &= dates <= date_to
+    scores = np.where(mask, scores, -np.inf)
+    k = min(int(limit), int(mask.sum()))
+    if k <= 0:
+        return []
+    top = np.argpartition(-scores, k - 1)[:k]
+    top = top[np.argsort(-scores[top], kind="stable")]
+    db = _get_db()
     out = []
-    for hit in results.points:
-        p = dict(hit.payload or {})
-        p["point_id"] = hit.id
-        p["_native"] = float(hit.score)
-        out.append(p)
+    for idx in top:
+        pid = int(ids[idx])
+        row = db.execute("SELECT text, date, chat_id, chat_title, source_file, chunk_index"
+                         " FROM chunks WHERE rowid=?", (pid,)).fetchone()
+        if row is None:
+            continue
+        text, date_, chat_id, chat_title, source_file, chunk_index = row
+        out.append({"point_id": pid, "text": text, "date": date_, "chat_id": chat_id,
+                    "chat_title": chat_title, "source_file": source_file,
+                    "chunk_index": chunk_index, "_native": float(scores[idx])})
     return out
 
 
 def _fts_search(query: str, limit: int, date_from: str | None,
                 date_to: str | None) -> list[dict]:
-    db = _get_fts()
-    if db is None:
-        return []
     match = _fts_match_query(query)
     if not match:
         return []
 
-    sql = ("SELECT point_id, text, date, chat_id, chat_title, source_file,"
+    sql = ("SELECT rowid, text, date, chat_id, chat_title, source_file,"
            " chunk_index, bm25(chunks) AS rank FROM chunks"
            " WHERE chunks MATCH ?")
     params: list = [match]
@@ -411,7 +389,7 @@ def _fts_search(query: str, limit: int, date_from: str | None,
     params.append(int(limit))
 
     out = []
-    for row in db.execute(sql, params):
+    for row in _get_db().execute(sql, params):
         pid, text, date, chat_id, chat_title, source_file, chunk_index, rank = row
         out.append({
             "point_id": pid,
@@ -486,29 +464,13 @@ def _list_dates() -> str:
 def _get_chunk(source_file: str, chunk_index: int) -> str:
     """Fetch a specific chunk by source file and index."""
     _index_logs()
-    client = _get_client()
-
-    from qdrant_client.models import Filter, FieldCondition, MatchValue
-    results, _ = client.scroll(
-        collection_name=COLLECTION,
-        scroll_filter=Filter(must=[
-            FieldCondition(key="source_file", match=MatchValue(value=source_file)),
-            FieldCondition(key="chunk_index", match=MatchValue(value=int(chunk_index))),
-        ]),
-        limit=1,
-    )
-
-    if not results:
+    row = _get_db().execute(
+        "SELECT date, chat_title, text FROM chunks WHERE rowid=?",
+        (_point_id(source_file, int(chunk_index)),)).fetchone()
+    if row is None:
         return f"Chunk not found: {source_file}#{chunk_index}"
-
-    point = results[0]
-    p = point.payload
-    return (
-        f"date: {p.get('date', '?')}\n"
-        f"chat: {p.get('chat_title', '?')}\n"
-        f"---\n"
-        f"{p.get('text', '')}"
-    )
+    date_, chat_title, text = row
+    return f"date: {date_}\nchat: {chat_title}\n---\n{text}"
 
 
 # MCP tools
@@ -564,14 +526,45 @@ def mem2_get_chunk(source_file: str, chunk_index: int) -> str:
     return _get_chunk(source_file, int(chunk_index))
 
 
-# selftest
+# selftest / maintenance
+
+def _reembed() -> int:
+    """Rewrite every vector with EMBED_MODEL, then restamp, atomically.
+
+    New vectors go to a side table; the swap and the restamp are one
+    transaction, so a crash leaves the old vectors and the old stamp intact.
+    """
+    global _matrix
+    db = open_db(DB_PATH)  # no stamp check: the stamp is what we're changing
+    old = get_meta(db, "embedder")
+    print(f"mem2 reembed: {old!r} -> {EMBED_MODEL!r} in {DB_PATH}")
+    db.execute("DROP TABLE IF EXISTS vecs_new")
+    db.execute("CREATE TABLE vecs_new AS SELECT * FROM vecs WHERE 0")
+    rows = db.execute("SELECT v.point_id, v.source_file, v.chunk_index, v.date, c.text"
+                      " FROM vecs v JOIN chunks c ON c.rowid = v.point_id").fetchall()
+    for k in range(0, len(rows), _EMBED_BATCH):
+        batch = rows[k:k + _EMBED_BATCH]
+        vecs = _embed([r[4] for r in batch])
+        db.executemany("INSERT INTO vecs_new VALUES (?, ?, ?, ?, ?)",
+                       [(r[0], r[1], r[2], r[3], v.tobytes()) for r, v in zip(batch, vecs)])
+        db.commit()
+        print(f"  {min(k + _EMBED_BATCH, len(rows))}/{len(rows)}", flush=True)
+    with db:
+        db.execute("DELETE FROM vecs")
+        db.execute("INSERT INTO vecs SELECT * FROM vecs_new")
+        db.execute("DROP TABLE vecs_new")
+        set_meta(db, "embedder", EMBED_MODEL)
+    db.close()
+    _matrix = None
+    print("mem2 reembed: done")
+    return 0
+
 
 def _selftest() -> int:
     """Direct-mode smoke test. Indexes real logs, searches, prints results."""
     print("mem2 selftest")
     print(f"  log dir: {INGESTED_DIR}")
-    print(f"  qdrant:  {QDRANT_PATH}")
-    print(f"  fts:     {FTS_PATH}")
+    print(f"  db:      {DB_PATH}")
 
     logs = _log_paths()
     print(f"  log files: {len(logs)}")
@@ -581,18 +574,12 @@ def _selftest() -> int:
 
     print("  indexing...")
     _index_logs()
-    client = _get_client()
-    info = client.get_collection(COLLECTION)
-    print(f"  qdrant points: {info.points_count}")
-
-    db = _get_fts()
-    if db is None:
-        print("  FTS5: UNAVAILABLE (semantic-only fallback)")
-    else:
-        n = db.execute("SELECT count(*) FROM chunks").fetchone()[0]
-        print(f"  fts rows: {n}")
-        q = "compaction ceiling"
-        print(f"  fts match expr for {q!r}: {_fts_match_query(q)}")
+    db = _get_db()
+    print(f"  embedder: {get_meta(db, 'embedder')}")
+    print(f"  vectors: {db.execute('SELECT count(*) FROM vecs').fetchone()[0]}")
+    print(f"  fts rows: {db.execute('SELECT count(*) FROM chunks').fetchone()[0]}")
+    q = "compaction ceiling"
+    print(f"  fts match expr for {q!r}: {_fts_match_query(q)}")
 
     print("  listing dates:")
     print("  " + _list_dates().replace("\n", "\n  "))
@@ -607,4 +594,6 @@ def _selftest() -> int:
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
         raise SystemExit(_selftest())
+    if "--reembed" in sys.argv:
+        raise SystemExit(_reembed())
     mcp.run()

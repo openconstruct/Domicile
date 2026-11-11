@@ -329,22 +329,15 @@ class CodexCLIProvider(Provider):
         if not query:
             return ""
         try:
-            import mem0_core
+            import mem0_switch as mem0_core
             hits = await asyncio.wait_for(
                 asyncio.to_thread(mem0_core.hint, query[:2000]), timeout=30.0)
         except Exception:
             return ""
         if not hits:
             return ""
-        lines = []
-        for score, made, mem in hits:
-            stamp = f"{made} " if made else ""
-            tag = "[kw] " if score <= 0 else f"[{score:.2f}] "
-            lines.append(f"- {tag}{stamp}{mem}")
-        return ("[memory hints -- auto-retrieved from long-term memory by "
-                "similarity to the message below. Possibly relevant, "
-                "possibly noise; call memory_search for full detail before "
-                "relying on one.]\n" + "\n".join(lines))
+        import hints  # the one renderer; see hints.py
+        return hints.render(hits)
 
     # subprocess
 

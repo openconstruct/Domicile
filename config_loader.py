@@ -53,7 +53,8 @@ DEFAULTS = {
     #   mem1_total: always-loaded memory budget; per-file caps scale to it.
     #   mem1_caps: optional per-file overrides, {"user.md": 5000}.
     "context": {"compact_ceiling_tokens": 60_000,
-                "compact_floor_tokens": 30_000, "mem1_total": None,
+                "compact_floor_tokens": 30_000,
+                "compact_keep_turns": 4, "mem1_total": None,
                 "mem1_caps": {}},
 }
 
@@ -74,9 +75,14 @@ DEFAULT_WRITE_ROOTS = ["data/memory", "data/notes", "data/uploads", "workspace"]
 #           feeds and APIs work), same writable roots, detached from cchat.
 #   full    unrestricted.
 #   none    no tools (compaction).
+#   audit   local reads only (Read/Glob/Grep): no writes, no shell, no network,
+#           no ToolWake. For reviewing untrusted input -- see audit.py. Write
+#           tools do not exist rather than being confined, because an empty
+#           write_roots is re-filled with the defaults below.
 PROFILES = {
     "safe":   {"tools": "sandbox", "toolwake": False},
     "wakeup": {"tools": "wakeup", "toolwake": True},
+    "audit":  {"tools": "audit", "toolwake": False},
     "full":   {"tools": "full"},
     "none":   {"tools": "none"},
 }
@@ -91,6 +97,10 @@ ROLE_DEFAULTS = {
     # the chat's. Edit with: python3 allow.py --role wakeup ...
     "wakeup":  {"profile": "wakeup", "max_tool_rounds": 60,
                 "write_roots": list(DEFAULT_WRITE_ROOTS)},
+    # Reviews untrusted text (a skill before install). Deliberately not a chat
+    # role: no user turn reaches it, and nothing the skill contains can widen
+    # it. The prompt lives in audit.py.
+    "audit":   {"profile": "audit", "max_tool_rounds": 20},
 }
 
 
@@ -410,6 +420,13 @@ def _perm(role: str) -> str:
     return _PERM_ROLE.get() or role
 
 
+# Roles that review untrusted input may only ever lose capability, never gain
+# it: an unknown profile fails closed to "safe", which for these would hand back
+# writes and a sandboxed shell. So a mangled profile on one of these roles is
+# refused back to its own tier instead of being "safely" downgraded.
+_MIN_PROFILE = {"audit": "audit"}
+
+
 def load_roles() -> dict:
     roles = deepcopy(ROLE_DEFAULTS)
     for name, block in _read_json(ROLES_PATH).items():
@@ -419,9 +436,15 @@ def load_roles() -> dict:
             roles[name].update(block)
         else:
             roles[name] = block
-    for blk in roles.values():
-        if isinstance(blk, dict):
-            _expand_profile(blk)
+    for name, blk in roles.items():
+        if not isinstance(blk, dict):
+            continue
+        _expand_profile(blk)
+        if blk.get("profile_error") and name in _MIN_PROFILE:
+            prof = PROFILES[_MIN_PROFILE[name]]
+            blk["tools"] = prof["tools"]
+            blk["toolwake"] = bool(prof.get("toolwake", False))
+            blk.pop("write_roots", None)
     return roles
 
 

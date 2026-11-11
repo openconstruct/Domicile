@@ -914,6 +914,12 @@ PHASE_FULL = PHASE_WRITE + ["Bash", "ToolWake"]
 PHASE_SANDBOX = PHASE_WRITE + ["Bash"]
 PHASE_WAKEUP = PHASE_SANDBOX + ["ToolWake"]
 
+# Local reads only: no writes, no shell, no network, no pane, no wakeup. This is
+# the audit tier (config_loader PROFILES["audit"]). Web is deliberately absent:
+# an auditor that can fetch is an exfiltration channel for the text it is
+# reading, and the skill under review is the untrusted party. Reads stay local
+# and the finding leaves as text.
+PHASE_AUDIT = ["Read", "Glob", "Grep"]
 PHASE_ALIASES = {
     "none": [],
     "readonly": PHASE_READONLY,
@@ -921,6 +927,7 @@ PHASE_ALIASES = {
     "sandbox": PHASE_SANDBOX,
     "wakeup": PHASE_WAKEUP,
     "full": PHASE_FULL,
+    "audit": PHASE_AUDIT,
 }
 
 
