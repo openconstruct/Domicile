@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from paths import CCHAT_DATA, CONFIG_PATH, HEARTBEAT_FILE, CRASH_LOG, BACKUP_STATE, HOURLY_INGEST_STATUS_PATH, QDRANT_PATH, SOCKET_PATH, SELFTEST_LOG, SELFTEST_STATUS
+from paths import CCHAT_DATA, CONFIG_PATH, HEARTBEAT_FILE, CRASH_LOG, BACKUP_STATE, HOURLY_INGEST_STATUS_PATH, FLASH_DB_PATH, SOCKET_PATH, SELFTEST_LOG, SELFTEST_STATUS
 
 # Adapters providers/__init__.get_provider() can actually construct. Checked
 # instead of a provider-*name* allowlist: dispatch is by adapter, names are
@@ -228,31 +228,14 @@ def check_hourly_ingest() -> Check:
 
 
 def check_mem0_store(live: bool = False) -> Check:
-    import mem0_switch
-    if mem0_switch.flash():
-        from mem0_v2 import DB_PATH
-        if not DB_PATH.exists():
-            # A fresh install creates flash.db on first write, so absence is
-            # only a warning until something has been remembered.
-            return Check("mem0_store", WARN, f"flash memory on, {DB_PATH.name} not created yet")
-        if not SOCKET_PATH.exists():
-            return Check("mem0_store", FAIL if live else WARN,
-                         f"IPC socket absent ({SOCKET_PATH.name}) -- memory tools unreachable")
-        return Check("mem0_store", OK, "flash memory present, socket live")
-    if not QDRANT_PATH.exists():
-        return Check("mem0_store", FAIL, f"qdrant dir missing: {QDRANT_PATH}")
-    try:
-        entries = list(QDRANT_PATH.iterdir())
-    except OSError as exc:
-        return Check("mem0_store", FAIL, f"qdrant dir unreadable: {exc}")
-    if not entries:
-        return Check("mem0_store", WARN, "qdrant dir is empty")
+    if not FLASH_DB_PATH.exists():
+        # Created on the first memory write; a fresh install has none yet.
+        return Check("mem0_store", WARN, f"no fact store yet ({FLASH_DB_PATH.name})")
     if not SOCKET_PATH.exists():
         return Check("mem0_store", FAIL if live else WARN,
                      f"IPC socket absent ({SOCKET_PATH.name}) -- "
                      f"memory tools unreachable")
-    return Check("mem0_store", OK, "qdrant present, socket live"
-                 if SOCKET_PATH.exists() else "qdrant present")
+    return Check("mem0_store", OK, f"{FLASH_DB_PATH.name} present, socket live")
 
 
 def check_backup_fresh() -> Check:

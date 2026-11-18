@@ -25,11 +25,10 @@ class Mem0IpcNoListener(Mem0IpcDown):
 # server
 
 def _dispatch_to_core(op: str, args: dict):
-    return _dispatch_legacy(op, args)
-
-
-def _dispatch_legacy(op: str, args: dict):
-    import mem0_switch as core
+    if str(op).startswith("mem2_"):     # full memory: same process, same embedder
+        import mem2_core
+        return mem2_core.dispatch(op, args)
+    import mem0_v2 as core
 
     if op == "hint":
         return core.hint(
@@ -51,8 +50,12 @@ def _dispatch_legacy(op: str, args: dict):
         return core.list_memories(int(args.get("limit", 20)))
     if op == "list_facts":
         return core.list_facts(include_superseded=bool(args.get("include_superseded", False)))
+    if op == "source":
+        return core.source(args.get("ref", ""), int(args.get("limit", 2)))
     if op == "delete":
         return core.delete(args.get("memory_id", ""))
+    if op == "add_lesson":
+        return core.add_lesson(args.get("text", ""), metadata=args.get("metadata"))
     if op == "add_verbatim":
         return core.add_verbatim(args.get("text", ""), metadata=args.get("metadata"))
     if op == "mark_superseded":
@@ -90,7 +93,13 @@ async def serve(dispatch=_dispatch_to_core) -> asyncio.Server:
             except Exception:
                 pass
 
-    server = await asyncio.start_unix_server(handle, path=str(SOCKET_PATH))
+    # Create the socket owner-only from the start: a chmod after bind leaves a
+    # window where it carries the umask's (group-writable) mode.
+    old_umask = os.umask(0o177)
+    try:
+        server = await asyncio.start_unix_server(handle, path=str(SOCKET_PATH))
+    finally:
+        os.umask(old_umask)
     os.chmod(SOCKET_PATH, 0o600)
     return server
 

@@ -278,9 +278,16 @@ calls. The daily logs (`mem0/logs/*.log`) are the source for mem2's search index
 
 # git+push
 
+GIT_TIMEOUT_S = int(os.environ.get("CCHAT_BACKUP_GIT_TIMEOUT", 1800))
+
+
 def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
+    # Bounded: a push/fetch against a stalled remote used to hang the backup
+    # loop forever. Never asks for credentials on a terminal either.
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
     return subprocess.run(("git", "-C", str(STAGE)) + args,
-                          capture_output=True, text=True, check=check)
+                          capture_output=True, text=True, check=check,
+                          timeout=GIT_TIMEOUT_S, env=env)
 
 
 def ensure_repo() -> None:

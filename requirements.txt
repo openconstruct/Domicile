@@ -13,6 +13,10 @@ openai                  # OpenAI-compatible provider path (OpenRouter / NIM)
 
 python-dotenv           # shared .env credential loader
 
+# Memory (flash facts + full-memory search): local embeddings, no API key
+fastembed               # ONNX/CPU embedder (all-MiniLM-L6-v2)
+numpy                   # vector math
+
 # Google connector (Gmail / Calendar / Blogger / Chat) — optional
 google-auth
 google-auth-oauthlib

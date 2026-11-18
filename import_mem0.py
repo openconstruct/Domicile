@@ -46,10 +46,10 @@ def load(path) -> list:
 
 
 def run(path, add=None) -> dict:
-    """`add(text, metadata, key)` is injectable for tests; default is mem0_core."""
+    """`add(text, metadata, key)` is injectable for tests; default is the live store."""
     items = load(path)
     if add is None:
-        import mem0_switch as core
+        import mem0_v2 as core
 
         def add(text, meta, key):
             return core.add(text, extract=False, metadata=meta, idempotency_key=key)

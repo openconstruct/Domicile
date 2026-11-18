@@ -216,6 +216,16 @@ def _chunk(delta: str, model: str, cid: str, finish=None) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
 
+def _bind_hosts(default: str) -> list[str]:
+    try:
+        import credentials
+        raw = credentials.get("DOMICILE_API_HOST")
+    except Exception:
+        raw = ""
+    hosts = [h.strip() for h in (raw or "").split(",") if h.strip()]
+    return hosts or [default]
+
+
 class ApiServer:
     """Owns the aiohttp runner. Talks to cchat through the app object."""
 
@@ -568,8 +578,12 @@ class ApiServer:
         server.router.add_get("/health", lambda r: web.json_response({"status": "ok"}))
         self._runner = web.AppRunner(server)
         await self._runner.setup()
-        site = web.TCPSite(self._runner, self.host, self.port)
-        await site.start()
+        # There is NO authentication on these routes, and /v1/chat/completions
+        # drives an agent that has shell and file tools. DOMICILE_API_HOST in
+        # .env narrows where it listens (comma-separated, e.g.
+        # "127.0.0.1,100.x.y.z" for loopback + tailnet only).
+        for host in _bind_hosts(self.host):
+            await web.TCPSite(self._runner, host, self.port).start()
 
     async def stop(self) -> None:
         if self._runner is not None:

@@ -1,5 +1,5 @@
-# Fact extraction and reconciliation (Rook R1: the prompts carry the
-# quality — ported verbatim in prompts.py). The llm is any callable
+# Fact extraction (the prompts carry the quality — ported
+# verbatim in prompts_v3.py). The llm is any callable
 # (system_prompt, user_prompt) -> str; Domicile wires its own inference.
 import json
 import re
@@ -9,12 +9,6 @@ from .prompts_v3 import (
     AGENT_CONTEXT_SUFFIX,
     generate_additive_extraction_prompt,
 )
-from .prompts import (
-    AGENT_MEMORY_EXTRACTION_PROMPT,
-    DEFAULT_UPDATE_MEMORY_PROMPT,
-    USER_MEMORY_EXTRACTION_PROMPT,
-)
-
 
 def parse_messages(messages):
     if isinstance(messages, str):
@@ -26,43 +20,6 @@ def parse_messages(messages):
             continue
         out += f"{msg.get('role', 'user')}: {content}\n"
     return out
-
-
-def parse_json(text):
-    text = text.strip()
-    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
-    if fence:
-        text = fence.group(1).strip()
-    return json.loads(text)
-
-
-def extract_facts(messages, llm, agent_scoped=False, custom_instructions=None):
-    system = AGENT_MEMORY_EXTRACTION_PROMPT if agent_scoped else USER_MEMORY_EXTRACTION_PROMPT
-    if custom_instructions:
-        system += f"\n\nCustom instructions:\n{custom_instructions}"
-    if "json" not in system.lower():
-        system += ("\n\nYou must return your response in valid JSON format "
-                   "with a 'facts' key containing an array of strings.")
-    response = llm(system, f"Input:\n{parse_messages(messages)}")
-    data = parse_json(response)
-    return [str(f) for f in data.get("facts", [])]
-
-
-def reconcile(facts, existing, llm):
-    # existing: [{"id":..., "text":...}] retrieved as context for the facts.
-    current = [{"id": e["id"], "text": e["text"]} for e in existing]
-    user = (
-        "Current memory:\n"
-        + json.dumps(current, indent=2)
-        + "\n\nNew extracted facts:\n"
-        + json.dumps(facts, indent=2)
-        + "\n\nReturn the operations as JSON with a 'memory' key: a list of "
-        '{"id", "text", "event" (ADD/UPDATE/DELETE/NONE), "old_memory"} objects. '
-        "For ADD use a fresh placeholder id."
-    )
-    response = llm(DEFAULT_UPDATE_MEMORY_PROMPT, user)
-    data = parse_json(response)
-    return data.get("memory", [])
 
 
 # --- verbatim from installed mem0 2.0.19 mem0/memory/utils.py
@@ -128,8 +85,15 @@ def extract_additive(parsed_messages, existing_rows, llm, agent_scoped=False,
         if not response or not response.strip():
             return []
         try:
-            return json.loads(response, strict=False).get("memory", [])
+            data = json.loads(response, strict=False)
         except json.JSONDecodeError:
-            return json.loads(extract_json(response), strict=False).get("memory", [])
+            data = json.loads(extract_json(response), strict=False)
     except Exception:
         return []
+    # Models do return {"memory": null}, a bare list, or strings in the list.
+    # Callers iterate dicts, so hand back only that shape.
+    found = data.get("memory") if isinstance(data, dict) else data
+    if not isinstance(found, list):
+        return []
+    return [m if isinstance(m, dict) else {"text": m}
+            for m in found if isinstance(m, (dict, str))]

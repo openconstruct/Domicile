@@ -1,4 +1,4 @@
-# Keyword query builder + stopwords, copied from Domicile mem0_core.py (same FTS5 semantics).
+# Keyword query builder + stopwords: the one copy, shared by the fact store and mem2.
 import re
 
 _FTS_STOPWORDS = {'the', 'not', 'about', 'they', 'how', 'are', 'as', 'by', 'in', 'you', 'to', 'at', 'when', 'is', 'does', 'or', 'a', 'of', 'were', 'why', 'with', 'he', 'did', 'where', 'i', 'we', 'she', 'it', 'which', 'an', 'do', 'that', 'and', 'from', 'its', 'was', 'what', 'on', 'there', 'be', 'here', 'for', 'this'}

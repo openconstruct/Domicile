@@ -18,7 +18,7 @@ def _nested_extraction_child() -> bool:
 
 from mcp.server import MCPServer  # noqa: E402  (mcp 2.x renamed FastMCP)
 
-import mem0_ipc  # noqa: E402  -- cheap: no mem0/qdrant import here
+import mem0_ipc  # noqa: E402  -- cheap: no store import here
 
 mcp = MCPServer("memory")
 
@@ -28,7 +28,7 @@ def _ipc(op: str, args: dict) -> str:
 
 
 def _direct(op: str, args: dict) -> str:
-    import mem0_switch as core
+    import mem0_v2 as core
     try:
         if op == "search":
             return core.search(args.get("query", ""), int(args.get("limit", 5)))
@@ -38,8 +38,12 @@ def _direct(op: str, args: dict) -> str:
                             metadata=args.get("metadata"),
                             idempotency_key=args.get("idempotency_key"),
                             guard=bool(args.get("guard", False)))
+        if op == "add_lesson":
+            return core.add_lesson(args.get("text", ""), metadata=args.get("metadata"))
         if op == "list":
             return core.list_memories(int(args.get("limit", 20)))
+        if op == "source":
+            return core.source(args.get("ref", ""), int(args.get("limit", 2)))
         if op == "delete":
             return core.delete(args.get("memory_id", ""))
         raise ValueError(f"unknown op {op!r}")
@@ -79,6 +83,9 @@ def memory_search(query: str, limit: int = 5) -> str:
     preferences, why something was built the way it was, what was already
     researched. Prefer this over guessing or saying you don't recall.
 
+    Each result carries a short id in brackets; memory_source(id) shows the
+    conversation that memory was extracted from.
+
     Args:
         query: A natural-language question. Meaning is matched, not keywords.
         limit: Max memories to return (default 5).
@@ -109,9 +116,9 @@ def memory_add(text: str, extract: bool = True, metadata: dict | None = None,
             stores the text verbatim with no LLM call; use it when the
             wording matters or when storing something already distilled.
         metadata: Optional dict (e.g. {"author": "...", "date": "...",
-            "source": "notes.log"}) threaded verbatim onto each stored
+            "source": "2026-09-02.log"}) threaded verbatim onto each stored
             memory's payload. Carries provenance through the rebuild.
-        idempotency_key: A stable key (use mem0_core.chunk_digest(text)) that
+        idempotency_key: A stable key (use mem0_v2.chunk_digest(text)) that
             makes a repeat feed of the same chunk a no-op instead of a
             re-ingest. Guards rebuild re-runs against duplicating themselves.
         guard: If True, run the semantic dedup guard after adding — deletes
@@ -123,6 +130,42 @@ def memory_add(text: str, extract: bool = True, metadata: dict | None = None,
                          "metadata": metadata,
                          "idempotency_key": idempotency_key,
                          "guard": bool(guard)})
+
+
+@mcp.tool()
+@_safe
+def memory_source(ref: str, limit: int = 2) -> str:
+    """Show where a memory came from: the passage of the original conversation
+    it was extracted from. Use before relying on a memory for something that
+    matters, when a memory seems wrong or too thin, or to recover the detail
+    and reasoning the one-line fact left out.
+
+    Args:
+        ref: The short id shown in brackets by memory_search / memory_list, or
+            a few words of the memory itself.
+        limit: How many passages to show (default 2).
+    """
+    return _call("source", {"ref": (ref or "").strip(), "limit": int(limit)})
+
+
+@mcp.tool()
+@_safe
+def memory_lesson(text: str) -> str:
+    """Store a lesson: something learned the hard way that should change what
+    is done next time. Use right after a correction, a mistake whose cause is
+    now understood, or a rule discovered by getting it wrong.
+
+    Write it as: when <situation>, <do / avoid this> -- because <cause>.
+    Self-contained and specific (name the file, command, tool or person), so
+    it still makes sense read cold. One lesson per call.
+
+    Lessons are kept apart from ordinary facts: they never fade with age, and
+    they surface as hints when a later message looks like the same situation.
+
+    Args:
+        text: The lesson. "Lesson:" is added if you leave it off.
+    """
+    return _call("add_lesson", {"text": (text or "").strip()})
 
 
 @mcp.tool()
@@ -157,14 +200,7 @@ def _selftest() -> int:
     print("list   :", listing)
 
     import time as _t
-    import mem0_core as core
-    core._maybe_sync_fts(force=True)
-    db = core._get_fts()
-    if db is None:
-        print("fts    : UNAVAILABLE (semantic-only fallback)")
-    else:
-        n = db.execute("SELECT count(*) FROM memories").fetchone()[0]
-        print(f"fts    : {n} rows mirrored")
+    import mem0_v2 as core
 
     print("search :")
     print(_direct("search",
@@ -177,12 +213,9 @@ def _selftest() -> int:
     for score, made, mem in hits:
         tag = "[kw]" if score <= 0 else f"[{score:.2f}]"
         print(f"         {tag} {made} {mem[:90]}")
-    import mem0_core as core
-    stale = [r for r in core.rows(core.store().get_all(
-        filters={"user_id": core.USER_ID}, top_k=core.ALL_ROWS))
-        if r.get("memory", "").startswith("Selftest:")]
+    stale = [r for r in core._all_rows() if (r["text"] or "").startswith("Selftest:")]
     for r in stale:
-        core.store().delete(memory_id=r["id"])
+        core.purge(r["id"])
     print(f"cleaned: {len(stale)} selftest row(s)")
     return 0
 

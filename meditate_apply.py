@@ -2,7 +2,7 @@
 """Preview or apply memory consolidation proposals.
 
 Defaults to preview; --apply writes the selected proposals.
---store rebuild uses the disposable store; --store live uses memory IPC.
+Writes go to the live store through memory IPC, so cchat must be running.
 --only 3,7,12 selects proposal indices from the input log.
 """
 
@@ -16,32 +16,11 @@ from pathlib import Path
 import mem0_ipc
 import paths as _P
 
-REBUILD_QDRANT = _P.MEM0_DIR / "qdrant-rebuild"
-REBUILD_FTS = _P.MEM0_DIR / "mem0-fts-rebuild.db"
-
-
 
 def newest_log() -> Path | None:
     """Most recent meditate_dryrun.py output in data/mem0/, if any."""
     logs = sorted(_P.MEM0_DIR.glob("meditation-*.json"), key=lambda p: p.stat().st_mtime)
     return logs[-1] if logs else None
-
-
-class _DirectBackend:
-
-    def __init__(self) -> None:
-        import mem0_core as C
-        C.QDRANT_PATH = REBUILD_QDRANT
-        C.CONFIG["vector_store"]["config"]["path"] = str(REBUILD_QDRANT)
-        C.MEM0_FTS_PATH = REBUILD_FTS
-        REBUILD_QDRANT.mkdir(parents=True, exist_ok=True)
-        self._core = C
-
-    def add_verbatim(self, text: str, metadata: dict | None) -> str:
-        return self._core.add_verbatim(text, metadata=metadata)
-
-    def mark_superseded(self, drop_id: str, keep_id: str, reason: str) -> str:
-        return self._core.mark_superseded(drop_id, keep_id, reason=reason)
 
 
 class _IpcBackend:
@@ -52,14 +31,6 @@ class _IpcBackend:
     def mark_superseded(self, drop_id: str, keep_id: str, reason: str) -> str:
         return mem0_ipc.call("mark_superseded",
                              {"drop_id": drop_id, "keep_id": keep_id, "reason": reason})
-
-
-def _backend_for(target: str):
-    if target == "rebuild":
-        return _DirectBackend()
-    if target == "live":
-        return _IpcBackend()
-    raise ValueError(f"unknown --store {target!r}")
 
 
 def _short(s: str) -> str:
@@ -119,8 +90,6 @@ def main() -> int:
     ap.add_argument("log", nargs="?", default=None,
                      help="meditate_dryrun.py output JSON (default: the newest "
                           "meditation-*.json in data/mem0/)")
-    ap.add_argument("--store", choices=("rebuild", "live"), default="rebuild",
-                     help="which qdrant store to write into (default: rebuild)")
     ap.add_argument("--apply", action="store_true",
                      help="actually write; without this, preview only")
     ap.add_argument("--only", type=str, default=None,
@@ -143,7 +112,7 @@ def main() -> int:
                 if only is None or i in only]
 
     print(f"{len(selected)}/{len(proposals)} proposal(s) selected from {log_path}")
-    print(f"target store: {args.store}"
+    print("target store: live (through memory IPC; cchat must be running)"
           + ("" if args.apply else "  (PREVIEW ONLY -- pass --apply to write)"))
     print()
     for i, p in selected:
@@ -153,7 +122,7 @@ def main() -> int:
     if not args.apply:
         return 0
 
-    backend = _backend_for(args.store)
+    backend = _IpcBackend()
 
     print("--- applying ---")
     failures = 0

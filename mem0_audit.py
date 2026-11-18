@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import mem0_core  # noqa: E402  (sets telemetry/env before importing mem0)
+import mem0_v2  # noqa: E402
 
 
 RULES: list[tuple[str, str, re.Pattern]] = [
@@ -86,20 +86,17 @@ def _age_days(row: dict, now: datetime) -> float:
 
 
 def audit(min_age_days: float, only: str | None) -> list[dict]:
-    store = mem0_core.store()
-    rows = mem0_core.rows(
-        store.get_all(
-            filters={"user_id": mem0_core.USER_ID},
-            top_k=mem0_core.ALL_ROWS,
-        )
-    )
+    # Active facts, straight from the store (opens flash.db: SQLite/WAL, so
+    # this is safe to run while cchat is up).
+    rows = [{"id": r["id"], "memory": r["text"], "created_at": mem0_v2._created(r)}
+            for r in mem0_v2._all_rows(include_superseded=False)]
     now = datetime.now(timezone.utc)
 
     suspects = []
     for row in rows:
         text = row.get("memory") or ""
-        if DATED.search(text):
-            continue
+        if DATED.search(text) or text.lstrip().startswith("Lesson:"):
+            continue      # a lesson is supposed to say what broke
         age = _age_days(row, now)
         if age < min_age_days:
             continue
@@ -130,7 +127,7 @@ def main() -> int:
 
     try:
         suspects = audit(args.age, args.category)
-    except mem0_core.StoreBusy as exc:
+    except mem0_v2.StoreBusy as exc:
         print(f"memory store is busy: {exc}", file=sys.stderr)
         return 1
 

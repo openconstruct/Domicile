@@ -8,11 +8,11 @@ import numpy as np
 
 from . import extract as extract_mod
 from .fts import _fts_match_query
-from .scoring import HINT_THRESHOLD, rank_score, rank_scores
-
-RRF_K = 60  # Domicile's fusion damping (mem0_core.RRF_K)
+from .retrieval import RRF_K
+from .scoring import HINT_THRESHOLD, rank_scores
 from .store import Store, text_hash
-from .vectors import cosine_scores, dequantize_int8, from_blob, normalize, quantize_int8, to_blob
+from . import vectors as V
+from .vectors import Scanner, from_blob, normalize, quantize_int8, to_blob
 
 
 class MemoryCore:
@@ -29,7 +29,8 @@ class MemoryCore:
         self._cache_cols = {}
         self._cache_version = -1
         self._cache_rows = []
-        self._cache_matrix = None
+        self._cache_scan = Scanner()
+        self.rebuilds = 0  # full cache reloads (tests / diagnostics)
 
     def close(self):
         self.store.close()
@@ -41,43 +42,116 @@ class MemoryCore:
         codes, scale = quantize_int8(vec)
         return to_blob(vec), codes, scale, len(vec)
 
+    _BLOBS = ("embedding", "embedding_int8")
+
+    @staticmethod
+    def _entry(row):
+        """(float32 vec | None, int8 codes | None, scale) for the Scanner."""
+        return (from_blob(row["embedding"]) if row.get("embedding") else None,
+                np.frombuffer(row["embedding_int8"], dtype=np.int8)
+                if row.get("embedding_int8") else None,
+                row.get("embedding_scale") or 1.0)
+
+    @staticmethod
+    def _col_values(row):
+        return {"user_id": row["user_id"], "agent_id": row["agent_id"],
+                "run_id": row["run_id"], "salience": row["salience"],
+                "created_at": row["created_at"] if row["created_at"] else np.nan,
+                "use_count": row["use_count"]}
+
+    _COL_DTYPES = {"user_id": object, "agent_id": object, "run_id": object,
+                   "salience": np.float32, "created_at": np.float64,
+                   "use_count": np.float32}
+
+    def _lean(self, row):
+        # The Scanner holds the vectors; don't pin ~2 KB of blobs per fact too.
+        return {k: v for k, v in row.items() if k not in self._BLOBS}
+
+    def _rebuild(self):
+        tiered = self.store.count_active() >= V.EXACT_MAX
+        rows = self.store.all_active(float_vectors=not tiered)
+        self._cache_scan = Scanner.build([self._entry(r) for r in rows], tiered)
+        self._cache_cols = {
+            name: np.array([self._col_values(r)[name] for r in rows], dtype=dt)
+            for name, dt in self._COL_DTYPES.items()}
+        self._cache_rows = [self._lean(r) for r in rows]
+        self._cache_index = {r["id"]: i for i, r in enumerate(self._cache_rows)}
+        self.rebuilds += 1
+
+    def _apply(self, memory_id):
+        """Bring one fact's cache entry up to date. Copy-on-write throughout:
+        a reader holding the previous snapshot keeps a consistent one."""
+        row = self.store.get(memory_id)
+        active = row is not None and row["superseded_by"] is None
+        i = self._cache_index.get(memory_id)
+        if i is None and not active:
+            return
+        rows, cols, scan = self._cache_rows, self._cache_cols, self._cache_scan
+        if not active:                                   # deleted or superseded
+            self._cache_rows = rows[:i] + rows[i + 1:]
+            self._cache_cols = {n: np.delete(a, i) for n, a in cols.items()}
+            self._cache_scan = scan.deleted(i)
+            self._cache_index = {r["id"]: k for k, r in enumerate(self._cache_rows)}
+            return
+        vals = self._col_values(row)
+        if i is None:                                    # new fact
+            self._cache_rows = rows + [self._lean(row)]
+            self._cache_cols = {n: np.append(a, np.array([vals[n]], dtype=a.dtype))
+                                for n, a in cols.items()}
+            self._cache_scan = scan.appended(self._entry(row))
+            self._cache_index = {**self._cache_index, memory_id: len(rows)}
+            return
+        new_rows = list(rows)                            # text or metadata changed
+        new_rows[i] = self._lean(row)
+        new_cols = {}
+        for n, a in cols.items():
+            a = a.copy()
+            a[i] = vals[n]
+            new_cols[n] = a
+        self._cache_rows, self._cache_cols = new_rows, new_cols
+        self._cache_scan = scan.replaced(i, self._entry(row))
+
     def _snapshot(self):
-        # Rebuilt only when a write bumps the store version (read-mostly store).
+        """(rows, index, scanner, cols) for the active facts.
+
+        A write used to mean reloading every fact on the next read (250 ms at
+        14k facts, and linear in store size). Now the store's journal says
+        which ids changed and only those are applied; a full reload happens
+        once at start-up, or if the journal has been outrun.
+        """
         with self.store.lock:
             if self._cache_version != self.store.version:
-                rows = self.store.all_active()
-                self._cache_rows = rows
-                self._cache_index = {r["id"]: i for i, r in enumerate(rows)}
-                self._cache_matrix = np.vstack([
-                    (from_blob(r["embedding"]) if r["embedding"] else
-                     dequantize_int8(r["embedding_int8"], r["embedding_scale"]))
-                    for r in rows]).astype(np.float32) if rows else None
-                # Rook: float32 when stored -- int8 shifted cosines ~0.002 vs
-                # legacy, enough to reorder near-ties and move hint thresholds.
-                self._cache_cols = {
-                    "user_id": np.array([r["user_id"] for r in rows], dtype=object),
-                    "agent_id": np.array([r["agent_id"] for r in rows], dtype=object),
-                    "run_id": np.array([r["run_id"] for r in rows], dtype=object),
-                    "salience": np.array([r["salience"] for r in rows], dtype=np.float32),
-                    "created_at": np.array([r["created_at"] if r["created_at"] else np.nan
-                                            for r in rows], dtype=np.float64),
-                    "use_count": np.array([r["use_count"] for r in rows], dtype=np.float32),
-                }
+                changed = self.store.changed_since(self._cache_version)
+                if (changed is None or self._cache_version < 0
+                        or len(changed) > self.MAX_INCREMENTAL):
+                    self._rebuild()
+                else:
+                    for mid in dict.fromkeys(changed):
+                        self._apply(mid)
                 self._cache_version = self.store.version
-            return self._cache_rows, self._cache_index, self._cache_matrix, self._cache_cols
+            return self._cache_rows, self._cache_index, self._cache_scan, self._cache_cols
+
+    MAX_INCREMENTAL = 64
+
+    def _exact_vectors(self, rows):
+        """Scanner callback: true float32 vectors for a few row indices."""
+        def fetch(idx):
+            ids = [rows[int(i)]["id"] for i in idx]
+            blobs = self.store.float_vectors(ids)
+            return np.vstack([from_blob(blobs[m]) for m in ids])
+        return fetch
 
     def _ranked(self, query_text, user_id=None, agent_id=None, run_id=None,
                 metadata_filter=None, pool=None, hybrid=True):
-        # Rook R2: filters are a mask applied AFTER the matmul. Vectorized:
+        # Filters are a mask applied AFTER the matmul. Vectorized:
         # one matmul, one boolean mask, argsort -- no per-row Python loop.
         # hybrid=True fuses FTS5 keyword hits by reciprocal rank (RRF_K=60,
         # Domicile's existing fusion) -- the keyword signal mem0's BM25 used
         # to carry. Returns [(row, cosine, score)], best first.
         query = normalize(self.embedder.embed(query_text))
-        rows, index, matrix, cols = self._snapshot()
+        rows, index, scan, cols = self._snapshot()
         if not rows:
             return []
-        sims = cosine_scores(matrix, query)
         mask = np.ones(len(rows), dtype=bool)
         for col, val in (("user_id", user_id), ("agent_id", agent_id), ("run_id", run_id)):
             if val is not None:
@@ -87,12 +161,14 @@ class MemoryCore:
                 meta = json.loads(rows[i]["metadata"])
                 if any(meta.get(k) != v for k, v in metadata_filter.items()):
                     mask[i] = False
-        scores = rank_scores(sims, cols["salience"], cols["created_at"], cols["use_count"])
-        scores = np.where(mask, scores, -np.inf)
-        order = [int(i) for i in np.argsort(-scores) if mask[i]]
+        pool = pool or 30
+        sims = scan.sims(query, mask=mask, k=pool, exact=self._exact_vectors(rows))
+        with np.errstate(invalid="ignore"):
+            scores = rank_scores(sims, cols["salience"], cols["created_at"], cols["use_count"])
+        scores = np.where(mask & np.isfinite(sims), scores, -np.inf)
+        order = [int(i) for i in np.argsort(-scores) if np.isfinite(scores[i])]
         if not hybrid:
             return [(rows[i], float(sims[i]), float(scores[i])) for i in order]
-        pool = pool or 30
         sem = order[:pool]
         match = _fts_match_query(query_text)
         kw = []
@@ -108,6 +184,15 @@ class MemoryCore:
             for rank, i in enumerate(hits):
                 fused[i] = fused.get(i, 0.0) + 1.0 / (RRF_K + rank)
         best = sorted(fused, key=lambda i: -fused[i])
+        # Tiered scan only: a keyword hit outside the candidate set has no
+        # cosine yet. There are at most `pool` of them; score them exactly.
+        blind = [i for i in best if not np.isfinite(sims[i])]
+        if blind:
+            sims = sims.copy()
+            sims[blind] = self._exact_vectors(rows)(blind) @ query
+            scores = scores.copy()
+            scores[blind] = rank_scores(sims[blind], cols["salience"][blind],
+                                        cols["created_at"][blind], cols["use_count"][blind])
         # score stays the calibrated semantic value; RRF only orders.
         return [(rows[i], float(sims[i]), float(scores[i])) for i in best]
 
@@ -173,7 +258,10 @@ class MemoryCore:
             if not text:
                 continue
             h = text_hash(text)
-            if h in existing_hashes or h in seen:
+            # The top-25 are ranked against the whole conversation, so an exact
+            # restatement can sit outside them: check the store too.
+            if (h in existing_hashes or h in seen
+                    or self.store.has_active_hash(h, user_id, agent_id, run_id)):
                 continue
             seen.add(h)
             meta = dict(metadata or {})
@@ -188,7 +276,10 @@ class MemoryCore:
     def search(self, query, user_id=None, agent_id=None, run_id=None,
                metadata_filter=None, limit=10, threshold=None):
         ranked = self._ranked(query, user_id, agent_id, run_id, metadata_filter)
+        limit = 10 if limit is None else max(0, int(limit))
         out = []
+        if limit == 0:
+            return {"results": out}
         for row, sim, score in ranked:
             if threshold is not None and score < threshold:
                 continue

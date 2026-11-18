@@ -7,7 +7,7 @@ fact left alone yesterday may pair with something new today. A run is
 ~(live facts / 40) judge calls on the ACTIVE provider at thinking high, and
 each call carries identity.md + user.md as background (--no-context to drop it).
 
---store rebuild reads the disposable store; --store live reads through IPC.
+Facts are read from the live store through memory IPC.
 Proposals are written to data/mem0/<tag>.json for review before applying.
 """
 
@@ -23,11 +23,10 @@ from credentials import read_key
 from openai import OpenAI
 
 import mem0_ipc
-import paths
+from paths import CONFIG_PATH, MEM0_DIR, MEM1_DIR
 
-REBUILD = str(paths.MEM0_DIR / 'qdrant-rebuild')
-COL = 'ccchat'
-CFG = json.load(open(paths.CONFIG_PATH))
+with open(CONFIG_PATH, encoding='utf-8') as _fh:
+    CFG = json.load(_fh)
 BATCH = 40
 MAX_TOKENS = 32768
 
@@ -44,6 +43,9 @@ Rules:
 - Do NOT merge distinct states: "used Vulkan for inference" and "abandoned
   ROCm" are different facts. Preferences, decisions, and lessons beat
   play-by-play events when they overlap.
+- A fact that begins "Lesson:" is a rule learned from a mistake. Never drop
+  one in favour of an ordinary fact, and never fold it into a meta-fact; one
+  lesson may supersede another only when it clearly replaces it.
 - Supersede proposals name keep_id (the better fact) and drop_ids (the
   weaker ones). Never propose deleting both.
 - Meta proposals name member_ids (2-5 facts) and a synthesis text under 60
@@ -56,7 +58,7 @@ Rules:
 
 def background_context() -> str:
     """identity.md + user.md, so the judge knows who the operator and agent are."""
-    d = paths.MEM1_DIR
+    d = MEM1_DIR
     parts = []
     for name in ('identity.md', 'user.md'):
         try:
@@ -78,22 +80,6 @@ Identify supersede and meta proposals per the system rules."""
 
 
 def load_facts(store: str) -> list[dict]:
-    if store == 'rebuild':
-        from qdrant_client import QdrantClient
-        c = QdrantClient(path=REBUILD)
-        pts, _ = c.scroll(collection_name=COL, limit=2000, with_payload=True,
-                          with_vectors=False)
-        facts = []
-        for p in pts:
-            pl = p.payload or {}
-            facts.append({
-                'id': str(p.id),
-                'date': pl.get('date', '?'),
-                'kind': pl.get('kind', '?'),
-                'attr': pl.get('attributed_to') or '?',
-                'text': (pl.get('data') or '')[:500],
-            })
-        return facts
     if store == 'live':
         return mem0_ipc.call('list_facts', {})
     raise ValueError(f'unknown --store {store!r}')
@@ -183,8 +169,8 @@ def make_judge(provider, effort):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--store', choices=('rebuild', 'live'), default='rebuild',
-                     help='which store to read facts from (default: rebuild)')
+    ap.add_argument('--store', choices=('live',), default='live',
+                     help='kept for the systemd unit; the live store is the only one')
     ap.add_argument('--tag', default=None,
                      help='run tag; default: meditation-<UTC timestamp>-run1 '
                           '(fresh each run, never clobbers a prior log)')
@@ -200,7 +186,7 @@ def main():
     run_tag = args.tag or (
         'meditation-' + datetime.now(timezone.utc).strftime('%Y-%m-%dT%H%M%SZ')
         + '-run1')
-    out = paths.MEM0_DIR / f'{run_tag}.json'
+    out = MEM0_DIR / f'{run_tag}.json'
 
     facts = load_facts(args.store)
     facts.sort(key=lambda f: (f['date'], f['kind']))

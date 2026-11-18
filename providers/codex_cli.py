@@ -329,7 +329,7 @@ class CodexCLIProvider(Provider):
         if not query:
             return ""
         try:
-            import mem0_switch as mem0_core
+            import mem0_v2 as mem0_core
             hits = await asyncio.wait_for(
                 asyncio.to_thread(mem0_core.hint, query[:2000]), timeout=30.0)
         except Exception:

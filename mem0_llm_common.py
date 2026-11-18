@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
-"""Shared mem0 provider errors and credentials."""
+"""Shared extraction-provider base, errors and credentials."""
 
 from __future__ import annotations
 
 import random
 import time
+from types import SimpleNamespace
+
 from credentials import read_key
+
+
+class LLMBase:
+    """Config holder for an extraction adapter (was mem0.llms.base.LLMBase;
+    the adapters only ever read attributes off `self.config`)."""
+
+    def __init__(self, config=None):
+        self.config = SimpleNamespace(**dict(config or {}))
 
 
 class UsageLimitReached(RuntimeError):

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import json
 
-from mem0.llms.base import LLMBase
 
 import mem0_llm_common as _common
 
@@ -17,8 +16,8 @@ _NO_THINKING_ENDPOINTS = ("maas.aliyuncs.com",)
 
 
 def _parses_as_json(text: str) -> bool:
-    """True if mem0's extraction parser would get facts out of this reply."""
-    from mem0.memory.utils import remove_code_blocks, extract_json
+    """True if the extraction parser would get facts out of this reply."""
+    from domicile_mem0.extract import remove_code_blocks, extract_json
     cleaned = remove_code_blocks((text or "").strip())
     if not cleaned:
         return False
@@ -36,7 +35,7 @@ _is_usage_limit = _common.is_usage_limit
 _read_key = _common.read_key
 
 
-class OpenAILLM(_common.ExtractionResponse, LLMBase):
+class OpenAILLM(_common.ExtractionResponse, _common.LLMBase):
     """mem0 LLM provider hitting any OpenAI-compatible /chat/completions."""
 
     def __init__(self, config=None):

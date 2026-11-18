@@ -437,6 +437,7 @@
 "use strict";
 const $ = s => document.querySelector(s);
 let MODEL = "";   // set from /api/identity; empty means the server default
+let firstRender = true;
 let streaming = false;
 let abortCtrl = null;
 let chatKey = "";
@@ -625,10 +626,21 @@ function renderChat(msgs) {
   inner.innerHTML = "";
   for (const m of msgs) {
     const role = m.role === "user" ? "user" : "assistant";
+    if (m.synthetic) {
+      // compaction handover: huge, so keep it folded instead of filling the screen
+      const d = document.createElement("details");
+      d.className = "handover";
+      const sm = document.createElement("summary");
+      sm.textContent = "Handover note from earlier compaction (" + (m.text || "").length.toLocaleString() + " chars)";
+      d.append(sm, makeBubble(role, m.text || "", m.ts));
+      inner.appendChild(d);
+      continue;
+    }
     inner.appendChild(makeBubble(role, m.text || "", m.ts));
   }
   updateTokens();
-  if (stick) scrollBottom();
+  if (stick || firstRender) { scrollBottom(); requestAnimationFrame(scrollBottom); }
+  firstRender = false;
 }
 let lastCtx = null;
 function updateTokens() {

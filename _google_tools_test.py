@@ -136,12 +136,12 @@ class WriteTools(unittest.TestCase):
     def test_chat_send_and_read(self):
         GT.set_approver(lambda t, s, a: True)
         cm = fake_module("chat_client", send_message=lambda sp, tx, th: {"name": "spaces/A/messages/1"},
-                         list_messages=lambda sp, n: [{"createTime": "T", "sender_display": "Jerry",
+                         list_messages=lambda sp, n: [{"createTime": "T", "sender_display": "Alex",
                                                        "sender_id": "u", "sender_type": "HUMAN", "text": "hi"}])
         with patch.dict(sys.modules, {"chat_client": cm}):
             self.assertEqual(run("ChatSend", {"space": "spaces/A", "text": "yo"}),
                              "tool=ChatSend; space=spaces/A; name=spaces/A/messages/1")
-            self.assertEqual(run("ChatRead", {"space": "spaces/A"}), "T  Jerry (HUMAN): hi")
+            self.assertEqual(run("ChatRead", {"space": "spaces/A"}), "T  Alex (HUMAN): hi")
 
 
 class DraftTool(unittest.TestCase):

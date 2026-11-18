@@ -3,9 +3,15 @@
 
 set -uo pipefail
 
-echo "[drain] disabling watchdog + nightly timers so nothing restarts Domicile mid-drain"
+# Always put the timers back, even if the drain fails or is interrupted.
+restore_timers() {
+  echo "[drain] restoring watchdog timer"
+  systemctl --user start cchat-watchdog.timer || true
+}
+trap restore_timers EXIT
+
+echo "[drain] disabling watchdog timer so nothing restarts Domicile mid-drain"
 systemctl --user stop cchat-watchdog.timer || true
-systemctl --user stop mem0-nightly.timer  || true
 
 echo "[drain] stopping Domicile (cchat.service; tmux kill-server also kills mem0_server child)"
 systemctl --user stop cchat.service || { echo "[drain] FAILED to stop Domicile"; exit 1; }
@@ -29,7 +35,5 @@ echo
 echo "[drain] ingest-status.json:"
 cat "$HERE/data/mem0/ingest-status.json" 2>/dev/null || true
 echo
-echo "[drain] DONE. Restart Domicile when ready:"
+echo "[drain] DONE. Timers restored on exit. Start Domicile when ready:"
 echo "  systemctl --user start cchat.service"
-echo "  systemctl --user start cchat-watchdog.timer"
-echo "  systemctl --user start mem0-nightly.timer"

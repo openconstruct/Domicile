@@ -8,7 +8,6 @@ import shutil
 import subprocess
 from typing import Dict, List, Optional
 
-from mem0.llms.base import LLMBase
 
 import mem0_llm_common as _common
 
@@ -92,7 +91,7 @@ def _compact(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
     return out
 
 
-class ClaudeCliLLM(LLMBase):
+class ClaudeCliLLM(_common.LLMBase):
     """mem0 LLM provider backed by the local `claude` binary."""
 
     def __init__(self, config=None):
@@ -104,9 +103,6 @@ class ClaudeCliLLM(LLMBase):
             )
         model = getattr(self.config, "model", None)
         self.model = model if model in ("haiku", "sonnet", "opus") else DEFAULT_MODEL
-
-    def _validate_config(self):
-        return
 
     def generate_response(
         self,
@@ -155,19 +151,7 @@ class ClaudeCliLLM(LLMBase):
         return (proc.stdout or "").strip()
 
 
-def register() -> None:
-    """Make the provider available to mem0 as `claude_cli`."""
-    from mem0.configs.llms.base import BaseLlmConfig
-    from mem0.utils.factory import LlmFactory
-
-    LlmFactory.provider_to_class["claude_cli"] = (
-        "mem0_claude_llm.ClaudeCliLLM",
-        BaseLlmConfig,
-    )
-
-
 if __name__ == "__main__":
-    register()
     llm = ClaudeCliLLM()
     print("binary:", llm.binary, "| model:", llm.model)
     out = llm.generate_response(

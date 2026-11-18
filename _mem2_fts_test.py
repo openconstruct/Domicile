@@ -6,15 +6,13 @@ the embedder is a deterministic fake, so nothing is downloaded or loaded.
 """
 import hashlib
 import os
-import pickle
 import sqlite3
 import sys
-import types
 from pathlib import Path
 
 import numpy as np
 
-import mem2_server as m
+import mem2_core as m
 
 failures = []
 
@@ -62,7 +60,7 @@ day1.write_text(
 day2 = ing / "2026-10-01.log"
 day2.write_text(
     "=== compacted from chat 'abc' ('Main Chat') at 2026-10-01T02:00:00 ===\n\n"
-    "Rooks bent wire into hooks in captivity.\n")
+    "Crows bent wire into hooks in captivity.\n")
 m._index_logs()
 db = m._get_db()
 nv = db.execute("SELECT count(*) FROM vecs").fetchone()[0]
@@ -74,12 +72,12 @@ check("index: cursor rows", db.execute("SELECT count(*) FROM files").fetchone()[
 # --- 3. search ---------------------------------------------------------------
 kw = m._fts_search("COMPACT_BASE_PREAMBLE", 5, None, None)
 check("kw: exact string", kw and "context_diet" in kw[0]["text"])
-sem = m._semantic_search("rooks bent wire into hooks in captivity.", 3, None, None)
+sem = m._semantic_search("crows bent wire into hooks in captivity.", 3, None, None)
 check("sem: exact text ranks first", sem and sem[0]["date"] == "2026-10-01"
       and abs(sem[0]["_native"] - 1.0) < 1e-5, str(sem[:1]))
 check("sem: point id is the fts rowid",
       sem and sem[0]["point_id"] == m._point_id(str(day2), 0))
-only_sep = m._semantic_search("rooks wire hooks", 5, "2026-09-01", "2026-09-30")
+only_sep = m._semantic_search("crows wire hooks", 5, "2026-09-01", "2026-09-30")
 check("sem: date filter", only_sep and all(h["date"].startswith("2026-09") for h in only_sep),
       str([h["date"] for h in only_sep]))
 check("sem: empty window", m._semantic_search("x", 5, "2030-01-01", None) == [])
@@ -104,11 +102,11 @@ m._index_logs()
 nv = db.execute("SELECT count(*) FROM vecs").fetchone()[0]
 nc = db.execute("SELECT count(*) FROM chunks").fetchone()[0]
 check("prune: gone file leaves both tables", nv == nc == 3, f"vecs={nv} chunks={nc}")
-check("prune: gone from search", "Rooks bent" not in m._search("rooks wire hooks", 5))
+check("prune: gone from search", "Crows bent" not in m._search("crows wire hooks", 5))
 
 # --- 6. embedder stamp -------------------------------------------------------
 try:
-    m.open_db(m.DB_PATH, "sentence-transformers/all-MiniLM-L6-v2")
+    m.open_db(m.DB_PATH, "test/not-the-stamped-model")
     check("stamp: mismatch raises", False)
 except RuntimeError as exc:
     check("stamp: mismatch raises", "--reembed" in str(exc), str(exc))
@@ -127,82 +125,6 @@ check("reembed: side table gone", db2.execute(
 db2.close()
 m.EMBED_MODEL = old_model
 m._embed = fake_embed
-
-# --- 8. legacy qdrant dir and no mem2.db -> loud, not a silent empty store ----
-for p in (m.DB_PATH, Path(str(m.DB_PATH) + "-wal"), Path(str(m.DB_PATH) + "-shm")):
-    p.unlink(missing_ok=True)
-(m.LEGACY_QDRANT / "collection").mkdir(parents=True)
-try:
-    m._get_db()
-    check("legacy: refuses without migration", False)
-except RuntimeError as exc:
-    check("legacy: refuses without migration", "mem2_migrate.py" in str(exc), str(exc))
-
-# --- 9. migration from a qdrant storage.sqlite, without qdrant_client --------
-# Pickle stand-ins under qdrant's real module path, then hide the module, so
-# the migrator has to decode them the way it would on an install without it.
-mod = types.ModuleType("qdrant_client.http.models.models")
-
-
-class PointStruct:
-    def __init__(self, **kw):
-        self.__dict__.update(kw)
-
-
-PointStruct.__module__ = mod.__name__
-PointStruct.__qualname__ = "PointStruct"
-mod.PointStruct = PointStruct
-saved = {n: sys.modules.get(n) for n in (
-    "qdrant_client", "qdrant_client.http", "qdrant_client.http.models", mod.__name__)}
-for name in list(saved)[:-1]:
-    sys.modules[name] = types.ModuleType(name)
-sys.modules[mod.__name__] = mod
-
-import mem2_migrate as mg  # noqa: E402
-
-day2.write_text("=== compacted from chat 'abc' ('Main Chat') at 2026-10-01T02:00:00 ===\n\n"
-                "Rooks bent wire into hooks in captivity.\n")
-store = m.LEGACY_QDRANT / "collection" / "cchat-mem2" / "storage.sqlite"
-store.parent.mkdir(parents=True, exist_ok=True)
-q = sqlite3.connect(str(store))
-q.execute("CREATE TABLE points (id TEXT PRIMARY KEY, point BLOB)")
-marker = np.zeros(m.EMBED_DIMS, dtype=np.float32); marker[7] = 3.0  # un-normalised on purpose
-old_path = "/old/home/.mem0/logs/ingested/" + day2.name  # pre-move path: id won't match
-pts = [PointStruct(id=1, vector=[float(x) for x in marker], payload={
-           "text": "Rooks bent wire into hooks in captivity.", "source_file": old_path,
-           "chunk_index": 0, "date": "2026-10-01", "chat_id": "abc", "chat_title": "Main Chat"}),
-       PointStruct(id=2, vector=[float(x) for x in marker], payload={
-           "text": "stale chunk from a file that was later re-chunked", "source_file": old_path,
-           "chunk_index": 5, "date": "2026-10-01", "chat_id": "abc", "chat_title": "Main Chat"})]
-q.executemany("INSERT INTO points VALUES (?, ?)", [(str(p.id), pickle.dumps(p)) for p in pts])
-q.commit(); q.close()
-for name, was in saved.items():
-    if was is None:
-        sys.modules.pop(name, None)
-    else:
-        sys.modules[name] = was
-
-embedded = []
-m._embed = lambda texts: (embedded.extend(texts), fake_embed(texts))[1]
-stats = mg.migrate(store, m.DB_PATH)
-check("migrate: stats", stats == {"files": 2, "chunks": 4, "reused": 1, "embedded": 3}, str(stats))
-check("migrate: reused by text, not id", "Rooks bent wire into hooks in captivity." not in embedded)
-db3 = m.open_db(m.DB_PATH, m.EMBED_MODEL)
-blob = db3.execute("SELECT embedding FROM vecs WHERE point_id=?",
-                   (m._point_id(str(day2), 0),)).fetchone()[0]
-v = np.frombuffer(blob, dtype=np.float32)
-check("migrate: legacy vector carried over, normalised",
-      abs(v[7] - 1.0) < 1e-6 and abs(np.linalg.norm(v) - 1) < 1e-6)
-check("migrate: stale point dropped", db3.execute(
-    "SELECT count(*) FROM chunks WHERE chunks MATCH 'stale'").fetchone()[0] == 0)
-check("migrate: stamped bge", m.get_meta(db3, "embedder") == mg.LEGACY_EMBED_MODEL)
-db3.close()
-try:
-    mg.migrate(store, m.DB_PATH)
-    check("migrate: refuses to overwrite", False)
-except SystemExit as exc:
-    check("migrate: refuses to overwrite", "refusing" in str(exc))
-check("migrate: legacy store untouched", store.exists())
 
 # --- 10. RRF merge shape ----------------------------------------------------
 fused = {}

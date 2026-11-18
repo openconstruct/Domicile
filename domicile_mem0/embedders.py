@@ -1,11 +1,59 @@
-# Embedder surface. Spec D2: NOT pluggable in deployment — one fixed
-# on-device embedder (ONNX; Qualcomm native path, shim elsewhere). The
-# classes here are the seams for that one embedder, plus test doubles.
+# The embedder. ONE model for every store, loaded ONCE per process: the fact
+# store (mem0_v2) and full memory (mem2_core) both call embed_one/embed_many
+# here, so they share one ONNX session instead of each loading its own copy.
+#
+# Swapping the model means re-embedding BOTH stores (each stamps the model name
+# and refuses to open on a mismatch). Set DOMICILE_EMBED_MODEL only for that.
 import hashlib
+import os
+import threading
 
 import numpy as np
 
 from .vectors import normalize
+
+EMBED_MODEL = os.environ.get("DOMICILE_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+EMBED_DIMS = 384
+EMBED_MAX_TOKENS = 256      # MiniLM's window: text past this is not embedded
+
+_model = None
+_model_lock = threading.Lock()
+
+
+def _get_model():
+    """The process-wide fastembed model (ONNX/CPU), built on first use."""
+    global _model
+    if _model is None:
+        with _model_lock:
+            if _model is None:
+                from fastembed import TextEmbedding
+                import paths  # noqa: F401 -- sets FASTEMBED_CACHE_PATH to data/fastembed_cache
+                _model = TextEmbedding(EMBED_MODEL,
+                                       cache_dir=os.environ.get("FASTEMBED_CACHE_PATH"))
+    return _model
+
+
+def embed_many(texts):
+    """Unit-normalised float32 matrix, one row per text."""
+    m = np.asarray(list(_get_model().embed(list(texts))), dtype=np.float32)
+    if m.ndim == 1:
+        m = m[None, :]
+    norms = np.linalg.norm(m, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return m / norms
+
+
+def embed_one(text):
+    return embed_many([text])[0]
+
+
+class SharedEmbedder:
+    """MemoryCore's embedder interface over the shared model."""
+    name = EMBED_MODEL
+    dim = EMBED_DIMS
+
+    def embed(self, text):
+        return embed_one(text)
 
 
 class HashEmbedder:
@@ -21,34 +69,3 @@ class HashEmbedder:
             rng = np.random.default_rng(seed)
             vec += rng.standard_normal(self.dim)
         return normalize(vec)
-
-
-class CallableEmbedder:
-    # Adapts any text->vector callable (e.g. Domicile's own inference path).
-    def __init__(self, fn, dim):
-        self.fn = fn
-        self.dim = dim
-
-    def embed(self, text):
-        return normalize(self.fn(text))
-
-
-class OnnxEmbedder:
-    # The deployment embedder: an ONNX embedding model, mean-pooled.
-    # Execution provider selection (QNN on Qualcomm, CPU/XNNPACK via the
-    # shim elsewhere) is onnxruntime session config, set by the host app.
-    def __init__(self, model_path, tokenizer, dim, providers=None):
-        try:
-            import onnxruntime as ort
-        except ImportError as e:
-            raise RuntimeError("onnxruntime is required for OnnxEmbedder") from e
-        self.session = ort.InferenceSession(model_path, providers=providers)
-        self.tokenizer = tokenizer
-        self.dim = dim
-
-    def embed(self, text):
-        inputs = self.tokenizer(text, return_tensors="np")
-        out = self.session.run(None, dict(inputs))[0]
-        mask = inputs["attention_mask"].astype(np.float32)
-        pooled = (out * mask[:, :, None]).sum(axis=1) / mask.sum(axis=1, keepdims=True)
-        return normalize(pooled[0])

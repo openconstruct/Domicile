@@ -5,6 +5,7 @@ import hashlib
 import json
 import sqlite3
 import threading
+from collections import deque
 import time
 import uuid
 
@@ -79,6 +80,9 @@ class Store:
         self.db = sqlite3.connect(db_path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.version = 0  # bumped on any vector-affecting write; drives the scan cache
+        # (version, memory id) for the last few bumps, so the cache can apply one
+        # change instead of reloading every fact.
+        self.journal = deque(maxlen=512)
         # WAL + busy timeout: several readers, one deliberate writer (phase-2 note).
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA busy_timeout=5000")
@@ -101,6 +105,20 @@ class Store:
     def close(self):
         with self.lock:
             self.db.close()
+
+    def _bump(self, memory_id):
+        self.version += 1
+        self.journal.append((self.version, memory_id))
+
+    def changed_since(self, version):
+        """Ids touched after `version`, oldest first; None when the journal no
+        longer reaches back that far (the caller must reload everything)."""
+        with self.lock:
+            if version == self.version:
+                return []
+            if not self.journal or self.journal[0][0] > version + 1:
+                return None
+            return [mid for v, mid in self.journal if v > version]
 
     # -- embedder stamp -------------------------------------------------
     # Every vector in the store must come from one model. Dim cannot tell
@@ -150,7 +168,7 @@ class Store:
                  dim, text_hash(text), now, now, None, None, 0, salience),
             )
             self.db.commit()
-            self.version += 1
+            self._bump(mid)
             return mid
 
     def get(self, memory_id):
@@ -160,12 +178,31 @@ class Store:
             ).fetchone()
             return dict(row) if row else None
 
-    def all_active(self):
+    def all_active(self, float_vectors=True):
+        """Active facts in rowid order. float_vectors=False leaves the float32
+        blob out (the tiered scan only needs the int8 codes)."""
+        cols = COLUMNS if float_vectors else COLUMNS.replace(
+            "metadata, embedding, ", "metadata, NULL AS embedding, ")
         with self.lock:
             rows = self.db.execute(
-                f"SELECT {COLUMNS} FROM memories WHERE superseded_by IS NULL"
+                f"SELECT {cols} FROM memories WHERE superseded_by IS NULL ORDER BY rowid"
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def count_active(self):
+        with self.lock:
+            return self.db.execute(
+                "SELECT COUNT(*) FROM memories WHERE superseded_by IS NULL").fetchone()[0]
+
+    def float_vectors(self, ids):
+        """{id: float32 embedding blob} for a handful of ids."""
+        ids = list(ids)
+        if not ids:
+            return {}
+        with self.lock:
+            q = ",".join("?" * len(ids))
+            return dict(self.db.execute(
+                f"SELECT id, embedding FROM memories WHERE id IN ({q})", ids).fetchall())
 
     def list_rows(self, user_id=None, agent_id=None, run_id=None,
                   include_superseded=False, limit=100, offset=0):
@@ -193,7 +230,7 @@ class Store:
                  time.time(), memory_id),
             )
             self.db.commit()
-            self.version += 1
+            self._bump(memory_id)
 
     def update_metadata(self, memory_id, metadata):
         with self.lock:
@@ -202,6 +239,7 @@ class Store:
                 (json.dumps(metadata), time.time(), memory_id),
             )
             self.db.commit()
+            self._bump(memory_id)  # cached rows carry metadata (metadata_filter reads it)
 
     def mark_superseded(self, memory_id, superseded_by, reason):
         with self.lock:
@@ -210,13 +248,13 @@ class Store:
                 (superseded_by, reason, time.time(), memory_id),
             )
             self.db.commit()
-            self.version += 1
+            self._bump(memory_id)
 
     def delete(self, memory_id):
         with self.lock:
             cur = self.db.execute("DELETE FROM memories WHERE id=?", (memory_id,))
             self.db.commit()
-            self.version += 1
+            self._bump(memory_id)
             return cur.rowcount > 0
 
     def increment_use(self, memory_ids):
@@ -239,6 +277,14 @@ class Store:
                 "WHERE memories_fts MATCH ? AND m.superseded_by IS NULL "
                 "ORDER BY bm25(memories_fts) LIMIT ?", (match, int(limit))).fetchall()
         return [r[0] for r in rows]
+
+    def has_active_hash(self, h, user_id=None, agent_id=None, run_id=None):
+        """True when an ACTIVE fact with this exact text hash exists in the scope."""
+        with self.lock:
+            return self.db.execute(
+                "SELECT 1 FROM memories WHERE hash=? AND superseded_by IS NULL "
+                "AND user_id IS ? AND agent_id IS ? AND run_id IS ? LIMIT 1",
+                (h, user_id, agent_id, run_id)).fetchone() is not None
 
     def hashes(self, ids):
         with self.lock:

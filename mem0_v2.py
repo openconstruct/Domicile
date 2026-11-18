@@ -1,14 +1,11 @@
-"""Drop-in replacement for mem0_core's public API, backed by domicile_mem0.
+"""The memory fact store ("flash memory"): one SQLite file via domicile_mem0.
 
-Same function names, arguments and return strings as mem0_core, so the
-cutover is one import in mem0_ipc._dispatch_to_core and mem0_server._direct.
-Scoring reproduces the legacy path exactly (2026-11-08, mem0 2.0.19 with
-BM25 off and spaCy absent => semantic score is raw cosine):
+Public API: hint, search, add, add_verbatim, list_memories, list_facts,
+delete, mark_superseded, store. Scoring:
   semantic = top-20 by cosine (>= 0.1) over the user's facts, active only
-  keyword  = FTS5 over active facts (same query builder)
-  fused by RRF (k=60), then mem0_core's _salience_adjust on last_used /
-  created date / use_count.
-So HINT_THRESHOLD carries over without recalibration if the vectors match.
+  keyword  = FTS5 over active facts
+  fused by RRF (k=60), then a salience adjustment on last_used / created
+  date / use_count (domicile_mem0.retrieval).
 
 Delete policy (owner decision, 2026-11-08): delete is for extraction/integration
 only. The chat-facing `delete` op retires a fact (supersede with no
@@ -18,7 +15,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import sys
 import threading
@@ -33,38 +29,39 @@ sys.path.insert(0, str(_HERE))
 sys.path.insert(1, os.path.expanduser("~/domicile"))
 
 import config_loader as CL  # noqa: E402
-from paths import MEM0_DIR  # noqa: E402
+from paths import FLASH_DB_PATH, MEM0_DIR  # noqa: E402
 
 from domicile_mem0.core import MemoryCore  # noqa: E402
+from domicile_mem0.embedders import EMBED_DIMS, EMBED_MODEL, SharedEmbedder  # noqa: E402,F401
 from domicile_mem0.fts import _fts_match_query  # noqa: E402
-from domicile_mem0.vectors import cosine_scores, normalize  # noqa: E402
+from domicile_mem0.vectors import normalize  # noqa: E402
+from domicile_mem0.retrieval import (  # noqa: E402,F401 -- one copy, shared with mem2
+    RRF_K, HINT_LIMIT, HINT_RECENCY_BONUS, HINT_RECENCY_DAYS, HYBRID_RECENCY_BONUS,
+    HYBRID_RECENCY_DAYS, HINT_STALE_FLOOR, HINT_STALE_DAYS, HINT_FREQ_CAP, HINT_FREQ_K,
+    HYBRID_STALE_FLOOR, HYBRID_STALE_DAYS, HYBRID_FREQ_CAP, HYBRID_FREQ_K, EVENT_WEIGHT,
+    chunk_digest, recency_bonus as _recency_bonus, salience_adjust as _salience_adjust)
 
-DB_PATH = Path(os.environ.get("MEM0_V2_DB") or (MEM0_DIR / "flash.db"))
+DB_PATH = Path(os.environ.get("MEM0_V2_DB") or FLASH_DB_PATH)
 USER_ID = CL.load_identity()["mem0_user_id"]
-EMBED_MODEL = "BAAI/bge-small-en-v1.5"
-EMBED_DIMS = 384
 
-# --- constants copied verbatim from mem0_core (2026-11-08) ---------------
-HINT_THRESHOLD = 0.66
-HINT_LIMIT = 3
-HINT_RECENCY_BONUS = 0.06
-HINT_RECENCY_DAYS = 64
-RRF_K = 60
-HYBRID_RECENCY_BONUS = 0.6 / RRF_K
-HYBRID_RECENCY_DAYS = HINT_RECENCY_DAYS
-HINT_STALE_FLOOR = -0.10
-HINT_STALE_DAYS = 180
-HINT_FREQ_CAP = 0.12
-HINT_FREQ_K = 0.03
-EVENT_WEIGHT = 0.25
-_HYBRID_SCALE = HYBRID_RECENCY_BONUS / HINT_RECENCY_BONUS
-HYBRID_STALE_FLOOR = HINT_STALE_FLOOR * _HYBRID_SCALE
-HYBRID_STALE_DAYS = HINT_STALE_DAYS
-HYBRID_FREQ_CAP = HINT_FREQ_CAP * _HYBRID_SCALE
-HYBRID_FREQ_K = HINT_FREQ_K * _HYBRID_SCALE
+HINT_THRESHOLD = 0.50  # MiniLM (2026-11-11); was 0.66 for bge; matched hint volume
 
 class StoreBusy(RuntimeError):
-    """Never raised by SQLite (WAL, many readers); exists so callers that `except core.StoreBusy` still work."""
+    """Never raised by SQLite (WAL, many readers); kept so callers can `except StoreBusy`."""
+
+
+# Lessons: corrections and hard-won rules ("Lesson: don't X, because Y"). They
+# are a different kind of memory from facts: rarely retrieved, never stale, and
+# worth more than a fact at the moment they apply. So they clear the hint bar
+# a little lower, are never faded for being old or unused, and get a small
+# lift in search.
+LESSON_PREFIX = "Lesson:"
+LESSON_HINT_MARGIN = 0.05                 # cosine: how far under the hint bar a lesson may sit
+LESSON_SEARCH_BONUS = HYBRID_RECENCY_BONUS   # RRF domain: same size as "made today"
+
+
+def is_lesson(text: str, md: dict | None = None) -> bool:
+    return bool((md or {}).get("lesson")) or (text or "").lstrip().startswith(LESSON_PREFIX)
 
 
 SEM_TOP_K = 20        # mem0 Memory.search default top_k
@@ -78,38 +75,28 @@ _seen_keys: set[str] = set()
 
 # --- store ----------------------------------------------------------------
 
-class _FastEmbed:
-    def __init__(self):
-        os.environ.setdefault("FASTEMBED_CACHE_PATH",
-                              os.path.expanduser("~/domicile/data/fastembed_cache"))
-        from fastembed import TextEmbedding
-        self._m = TextEmbedding(EMBED_MODEL, cache_dir=os.environ["FASTEMBED_CACHE_PATH"])
-        self.dim = EMBED_DIMS
-        self.name = EMBED_MODEL
-
-    def embed(self, text):
-        return normalize(np.asarray(next(iter(self._m.embed([text]))), dtype=np.float32))
-
-
 def core(embedder=None) -> MemoryCore:
     global _core
     if _core is None:
         with _store_lock:
             if _core is None:
                 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-                _core = MemoryCore(str(DB_PATH), embedder or _FastEmbed())
+                _core = MemoryCore(str(DB_PATH), embedder or SharedEmbedder())
     return _core
 
 
+def store() -> MemoryCore:
+    """Open (warm) the store."""
+    return core()
+
+
 def _ensure_llm() -> None:
-    """Extraction rides mem0_core's provider chain (ChainLLM + adapters).
-    Lazy: importing mem0_core pulls in the mem0 library, which search/hint
-    never need. Last remaining mem0 dependency; port the adapters to drop it."""
+    """Wire the extraction provider chain. Lazy: search/hint never need it."""
     global _llm_ready
     if _llm_ready:
         return
-    import mem0_core as legacy
-    chain = legacy.ChainLLM(legacy.MEM0_LLM_CHAIN)
+    import mem0_chain
+    chain = mem0_chain.ChainLLM(mem0_chain.MEM0_LLM_CHAIN)
     chain._active()  # fail loudly here, not mid-extraction
 
     def call(system, user):
@@ -119,7 +106,7 @@ def _ensure_llm() -> None:
             response_format={"type": "json_object"})
     c = core()
     c.llm = call
-    c.custom_instructions = legacy.CUSTOM_INSTRUCTIONS
+    c.custom_instructions = mem0_chain.CUSTOM_INSTRUCTIONS
     _llm_ready = True
 
 
@@ -133,7 +120,7 @@ def _meta(row) -> dict:
 
 
 def _created(row, md=None) -> str:
-    """mem0_core.rows(): metadata 'date' wins when it is earlier."""
+    """Creation date; metadata 'date' wins when it is earlier."""
     md = _meta(row) if md is None else md
     c = row["created_at"]
     stamp = datetime.fromtimestamp(c, timezone.utc).date().isoformat() if c else ""  # mem0 stored UTC
@@ -141,42 +128,6 @@ def _created(row, md=None) -> str:
     if d and d <= (stamp or "9999"):
         stamp = d
     return stamp
-
-
-def _recency_bonus(created_at: str, peak: float = HINT_RECENCY_BONUS,
-                   horizon: int = HINT_RECENCY_DAYS) -> float:
-    try:
-        age = (date.today() - date.fromisoformat((created_at or "")[:10])).days
-    except ValueError:
-        return 0.0
-    if age <= 0:
-        return peak
-    if age >= horizon:
-        return 0.0
-    step = peak / max(1.0, math.log2(horizon))
-    return max(0.0, peak - step * math.floor(math.log2(age)))
-
-
-def _salience_adjust(last_used, created_at, use_count, *, peak, horizon, floor,
-                     stale_days, freq_cap, freq_k, event_weight=EVENT_WEIGHT):
-    used_stamp = last_used or created_at
-    try:
-        age = (date.today() - date.fromisoformat((used_stamp or "")[:10])).days
-    except ValueError:
-        age = 0
-    if age <= horizon:
-        used_decay = _recency_bonus(used_stamp, peak=peak, horizon=horizon)
-        created_decay = _recency_bonus(created_at, peak=peak, horizon=horizon)
-        decay = (1 - event_weight) * used_decay + event_weight * created_decay
-    else:
-        frac = min(1.0, (age - horizon) / max(1, stale_days - horizon))
-        decay = floor * frac
-    try:
-        uc = max(0, int(use_count or 0))
-    except (TypeError, ValueError):
-        uc = 0
-    freq = min(freq_cap, freq_k * math.log2(uc + 1)) if uc else 0.0
-    return decay + freq
 
 
 def _salience_log(line: str) -> None:
@@ -222,12 +173,12 @@ def _bump_use(ids) -> None:
 def _hybrid(query: str, limit: int) -> list[dict]:
     c = core()
     pool = max(limit * 3, 12)
-    rows, index, matrix, cols = c._snapshot()
+    rows, index, scan, cols = c._snapshot()
     if not rows:
         return []
     q = normalize(c.embedder.embed(query))
-    sims = cosine_scores(matrix, q)
     mask = cols["user_id"] == USER_ID
+    sims = scan.sims(q, mask=mask, k=SEM_TOP_K, exact=c._exact_vectors(rows))
     sims_m = np.where(mask & (sims >= SEM_THRESHOLD), sims, -np.inf)
     top = [int(i) for i in np.argsort(-sims_m)[:SEM_TOP_K] if np.isfinite(sims_m[i])]
     semantic = top[:pool]
@@ -252,6 +203,7 @@ def _hybrid(query: str, limit: int) -> list[dict]:
                     "created_at": _created(row, md),
                     "last_used": str(md.get("last_used") or "")[:10],
                     "use_count": row["use_count"] or 0,
+                    "lesson": is_lesson(row["text"], md),
                     "cos": None, "via": [], "score": 0.0}
             s["score"] += 1.0 / (RRF_K + rank)
             s["via"].append(via)
@@ -263,7 +215,7 @@ def _hybrid(query: str, limit: int) -> list[dict]:
     return [s for s in ranked if s["memory"]][:limit]
 
 
-# --- the tools (mem0_core signatures and return strings) -------------------
+# --- the tools ------------------------------------------------------------
 
 def search(query: str, limit: int = 5) -> str:
     query = (query or "").strip()
@@ -272,11 +224,14 @@ def search(query: str, limit: int = 5) -> str:
     limit = max(1, limit)
     ranked = _hybrid(query, max(limit * 3, 12))
     for s in ranked:
-        s["score"] += _salience_adjust(
+        adj = _salience_adjust(
             s.get("last_used"), s["created_at"], s.get("use_count"),
             peak=HYBRID_RECENCY_BONUS, horizon=HYBRID_RECENCY_DAYS,
             floor=HYBRID_STALE_FLOOR, stale_days=HYBRID_STALE_DAYS,
             freq_cap=HYBRID_FREQ_CAP, freq_k=HYBRID_FREQ_K)
+        if s["lesson"]:
+            adj = max(adj, 0.0) + LESSON_SEARCH_BONUS      # never stale, small lift
+        s["score"] += adj
     ranked.sort(key=lambda s: -s["score"])
     ranked = ranked[:limit]
     if not ranked:
@@ -286,7 +241,8 @@ def search(query: str, limit: int = 5) -> str:
     for s in ranked:
         cos = s["cos"]
         prefix = f"[{cos:.3f}]" if isinstance(cos, float) else "[kw]"
-        out.append(f"{prefix} {s['created_at']} {s['memory']}".strip())
+        # The short id is what memory_source / memory_delete take.
+        out.append(f"{prefix} {s['created_at']} ({s['id'][:8]}) {s['memory']}".strip())
     return "\n".join(out)
 
 
@@ -300,12 +256,15 @@ def hint(text: str, threshold: float = HINT_THRESHOLD,
     kw_only = 0
     for s in ranked:
         mem, via, cos = s["memory"], s["via"], s["cos"]
-        eff = (cos + _salience_adjust(
-            s.get("last_used"), s["created_at"], s.get("use_count"),
-            peak=HINT_RECENCY_BONUS, horizon=HINT_RECENCY_DAYS,
-            floor=HINT_STALE_FLOOR, stale_days=HINT_STALE_DAYS,
-            freq_cap=HINT_FREQ_CAP, freq_k=HINT_FREQ_K)
-        ) if isinstance(cos, float) else None
+        eff = None
+        if isinstance(cos, float):
+            adj = _salience_adjust(
+                s.get("last_used"), s["created_at"], s.get("use_count"),
+                peak=HINT_RECENCY_BONUS, horizon=HINT_RECENCY_DAYS,
+                floor=HINT_STALE_FLOOR, stale_days=HINT_STALE_DAYS,
+                freq_cap=HINT_FREQ_CAP, freq_k=HINT_FREQ_K)
+            # A lesson is never faded for age or disuse, and clears a lower bar.
+            eff = cos + (max(adj, 0.0) + LESSON_HINT_MARGIN if s["lesson"] else adj)
         if "sem" in via and eff is not None and eff >= threshold:
             out.append((eff, cos, s["created_at"], mem))
         elif via == "sem+kw" and eff is not None and eff >= threshold - 0.15:
@@ -319,33 +278,36 @@ def hint(text: str, threshold: float = HINT_THRESHOLD,
     return [(cos, stamp, mem) for _eff, cos, stamp, mem in out[:limit]]
 
 
-def chunk_digest(text: str) -> str:
-    return hashlib.sha256((text or "").strip().encode("utf-8")).hexdigest()[:16]
-
-
 # Calibrated 2026-11-10 against bge-small: pairs >=0.926 were restatements,
 # <=0.916 were distinct facts on one topic. Re-derive after any embedder swap.
-GUARD_CUTOFF = 0.92
+GUARD_CUTOFF = 0.865  # MiniLM (2026-11-11): selectivity-matched to bge 0.92 = 0.858, rounded up (under-delete)
 
 
 def _guard(added: list[dict], cutoff: float) -> None:
-    """mem0_guard.guard_new_facts: drop a just-extracted fact whose nearest
+    """Drop a just-extracted fact whose nearest
     other fact (top-5, this user) is >= cutoff cosine. Extraction-time
     delete -- allowed by the delete policy."""
     c = core()
-    rows, index, matrix, cols = c._snapshot()
-    if matrix is None:
+    rows, index, scan, cols = c._snapshot()
+    if not rows:
         return
+    user = cols["user_id"] == USER_ID
+    # The snapshot is taken once, so a fact deleted below is still in `matrix`.
+    # Track what this pass removed: otherwise two new facts that restate each
+    # other each see the other as "existing" and BOTH are deleted.
+    dropped: list[int] = []
     for r in added:
         i = index.get(r["id"])
         if i is None:
             continue
-        sims = cosine_scores(matrix, matrix[i] / (np.linalg.norm(matrix[i]) or 1.0))
-        sims = np.where(cols["user_id"] == USER_ID, sims, -np.inf)
+        sims = scan.sims(scan.vector(i), mask=user, k=5).copy()
         sims[i] = -np.inf
+        if dropped:
+            sims[dropped] = -np.inf
         if float(np.max(sims)) >= cutoff:
             c.store.delete(r["id"])
             r["event"] = "GUARDED"
+            dropped.append(i)
 
 
 def add(text: str, extract: bool = True, metadata: dict | None = None,
@@ -373,10 +335,32 @@ def add(text: str, extract: bool = True, metadata: dict | None = None,
     if not extract:
         return f"stored verbatim: {text[:100]}"
     r = [x for x in r if x.get("event") != "GUARDED"]
+    for x in r:                       # the extractor marks lessons by their prefix
+        if is_lesson(x.get("memory", "")):
+            try:
+                core().update(x["id"], metadata={"lesson": True})
+            except Exception:  # noqa: BLE001 -- tagging must never fail an ingest
+                pass
     if not r:
         return "no new facts (already covered by existing memories)"
     return "\n".join(f"{(x.get('event') or 'ADD').upper()}: {x.get('memory', '')[:120]}"
                      for x in r)
+
+
+def add_lesson(text: str, metadata: dict | None = None) -> str:
+    """Store a lesson verbatim. Returns a status line (the tool-facing op)."""
+    text = (text or "").strip()
+    if not text:
+        return "nothing to store"
+    if not text.startswith(LESSON_PREFIX):
+        text = f"{LESSON_PREFIX} {text}"
+    md = {"kind": "lesson", "date": date.today().isoformat(), **(metadata or {}), "lesson": True}
+    with _store_lock:
+        if core().store.has_active_hash(hashlib.md5(text.encode("utf-8")).hexdigest(), USER_ID, None, None):
+            return "already stored"
+        rid = add_verbatim(text, metadata=md)
+    _salience_log(f"lesson {rid}")
+    return f"stored lesson ({rid[:8]}): {text[:120]}"
 
 
 def add_verbatim(text: str, metadata: dict | None = None) -> str:
@@ -447,6 +431,51 @@ def _resolve(prefix: str):
     if len(m) > 1:
         return None, f"{prefix!r} matches {len(m)} memories; use a longer id"
     return dict(m[0]), None
+
+
+def source(ref: str, limit: int = 2) -> str:
+    """Where a memory came from: the transcript passage(s) it was extracted
+    from. `ref` is an id (or unique prefix), or words to find the memory by."""
+    ref = (ref or "").strip()
+    if not ref:
+        return "give a memory id (from memory_search / memory_list) or some of its words"
+    row, err = _resolve(ref)
+    if row is None:
+        hits = _hybrid(ref, 1)                  # not an id: take the best match for the words
+        if not hits:
+            return err
+        row = {"id": hits[0]["id"]}
+    c = core()
+    full = c.store.get(row["id"])
+    md = _meta(full)
+    day = _created(full, md)
+    head = f"memory ({full['id'][:8]}, {day or '?'}): {full['text']}"
+    if not full.get("embedding"):
+        return head + "\nsource: this memory has no stored vector to match against"
+    vec = np.frombuffer(full["embedding"], dtype=np.float32)
+    import mem2_core
+    found = mem2_core.passages_for(vec, day, limit) if day else []
+    if found:
+        out = [head, f"source: {Path(found[0]['source_file']).name} -- the passage(s) of that "
+                     f"day's transcript closest to it:"]
+        for n, p in enumerate(found, 1):
+            out.append(f"[{n}] cos={p['cosine']:.3f} chat={p['chat_title']} "
+                       f"ref={p['source_file']}#{p['chunk_index']}\n{p['text']}")
+        out.append("(mem2_get_chunk with the ref's file and the next/previous number reads on)")
+        return "\n\n".join(out)
+    # Not in full memory yet (today's log is indexed once it settles): read the log itself.
+    from paths import INGESTED_DIR, MEM0_LOG_DIR
+    for base in (MEM0_LOG_DIR, INGESTED_DIR):
+        log = base / f"{day}.log"
+        if day and log.is_file():
+            import fetch_result
+            body = fetch_result.find(log.read_text(encoding="utf-8", errors="replace"),
+                                     full["text"], top=limit, budget=3000)
+            return f"{head}\n\nsource: {log.name} (not indexed yet; matched by its words)\n{body}"
+    origin = md.get("kind") or md.get("source") or "stored directly"
+    return (f"{head}\n\nsource: no transcript for {day or 'its date'} "
+            f"(origin: {origin}). It was not extracted from a logged conversation, "
+            f"or that log is gone.")
 
 
 def delete(memory_id: str) -> str:

@@ -32,7 +32,7 @@ def _is_read_tool(name) -> bool:
 
 
 _MEM_TOOL_MARKERS = (
-    "memory_search", "memory_list", "memory_add",
+    "memory_search", "memory_list", "memory_add", "memory_lesson", "memory_source",
     "mem2_search", "mem2_get_chunk", "mem2_list_dates",
 )
 
@@ -56,7 +56,7 @@ from paths import SESSIONS_DIR as ROOT, CONTEXT_DIET_LOG as LOG, \
 WIRE_TOOL_RESULT_KEEP_LAST = 8   # tool results to leave whole; older get 2k head+tail
 WIRE_IMAGE_KEEP_LAST = 1       # image_url blocks to keep; older become a placeholder
 WIRE_MAX_CHARS_BEFORE_DIET = 40_000  # ~10k tokens; diet is cheap enough to run often
-WIRE_MAX_CHARS_AFTER_DIET = 10_000  # ~2.5k tokens; aggressive second pass if still too big
+WIRE_MAX_CHARS_AFTER_DIET = 28_000  # ~7k tokens; 500+500 floor pass only if still over this (was 10_000, which made it run every time)
 
 
 def enabled() -> bool:
@@ -71,7 +71,6 @@ def _approx_tokens(obj) -> int:
 
 # filtering
 
-FETCH_SCRIPT = Path(__file__).resolve().parent / "fetch_result.py"
 
 
 def _truncate(text: str, max_chars: int = TOOL_RESULT_MAX_CHARS,
@@ -88,8 +87,8 @@ def _truncate(text: str, max_chars: int = TOOL_RESULT_MAX_CHARS,
     cut = len(text) - head - tail
     recover = ""
     if tool_use_id:
-        recover = (f" Recover the cut part: python3 {FETCH_SCRIPT} "
-                   f"{tool_use_id} --start {head} --len {cut}")
+        import tool_spill             # the one place the recovery wording lives
+        recover = tool_spill.recovery_hint(tool_use_id, head, cut)
     return (
         text[:head]
         + f"\n\n… [{cut:,} characters trimmed from context; "
@@ -865,8 +864,16 @@ def _wire_truncate(m: dict, text: str, max_chars: int, head: int, tail: int) -> 
         found = tool_spill.KEY_IN_MARKER.search(text)
         if found:
             full = tool_spill.load(found.group(1))
-            if full is not None:
-                original, key = full, found.group(1)
+            if full is None:
+                # The saved copy is gone (pruned). Cutting again would slice
+                # through the old marker and lose its recovery command for
+                # nothing: leave the already-cut text alone.
+                return text
+            original, key = full, found.group(1)
+        elif tool_spill.ANY_TRIM_MARKER.search(text):
+            # Cut earlier with no saved copy. Never cut a cut: the offsets of a
+            # second marker would point into text that already has a hole.
+            return text
         else:
             key = tool_spill.spill(m.get("tool_call_id"), text)
     except Exception:
@@ -912,6 +919,7 @@ def diet_wire(wire: list[dict]) -> tuple[list[dict], dict]:
     idxs = wire_tool_result_indices(wire)
     spare_ids, n_mem_spared, n_read_spared = _wire_spare_call_ids(wire)
     keep_set = set(idxs[-WIRE_TOOL_RESULT_KEEP_LAST:] if len(idxs) > WIRE_TOOL_RESULT_KEEP_LAST else idxs)
+    idx_set = set(idxs)
     image_replace_cutoff_idx = -1
     if WIRE_IMAGE_KEEP_LAST > 0:
         image_idxs = [i for i in idxs if _is_image_content(wire[i].get("content"))]
@@ -923,7 +931,7 @@ def diet_wire(wire: list[dict]) -> tuple[list[dict], dict]:
     images_dropped = 0
     out: list[dict] = []
     for i, m in enumerate(wire):
-        if i in keep_set or i not in idxs:
+        if i in keep_set or i not in idx_set:
             out.append(m)
             continue
         content = m.get("content")
@@ -963,7 +971,7 @@ def diet_wire(wire: list[dict]) -> tuple[list[dict], dict]:
         _AGGRESSIVE_TAIL = 500
         result: list[dict] = []
         for i, m in enumerate(out):
-            if i in keep_set or i not in idxs or m.get("tool_call_id") in spare_ids:
+            if i in keep_set or i not in idx_set or m.get("tool_call_id") in spare_ids:
                 result.append(m)  # keep-whole tail, or a spared mem/read result
                 continue
             content = m.get("content")

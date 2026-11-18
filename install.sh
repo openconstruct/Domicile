@@ -29,7 +29,7 @@ say "Creating venv at $VENV"
 
 say "Installing dependencies (a few minutes on small machines)"
 "$VENV/bin/pip" install --quiet --upgrade pip
-"$VENV/bin/pip" install -r "$HERE/requirements.txt" -r "$HERE/requirements-mem0.txt"
+"$VENV/bin/pip" install -r "$HERE/requirements.txt"
 
 [[ "${1:-}" == "--no-wizard" ]] && { say "Done. Run the wizard with: $VENV/bin/python $HERE/wizard.py"; exit 0; }
 

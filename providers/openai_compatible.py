@@ -57,30 +57,15 @@ def _truncate_tool_output(text: str, call_id=None) -> str:
     short enough to deliver whole now: the wire diet trims older results harder
     later and needs the original then).
     """
-    key = None
-    try:
-        import tool_spill
-        key = tool_spill.spill(call_id, text)
-    except Exception:
-        key = None
+    import tool_spill
     if len(text) <= TOOL_OUTPUT_MAX_CHARS:
+        tool_spill.spill(call_id, text)   # the wire diet may need the original later
         return text
-    head = TOOL_OUTPUT_HEAD
-    tail = TOOL_OUTPUT_TAIL
-    cut = len(text) - head - tail
     _log(f"tool_output_truncated: {len(text):,} -> {TOOL_OUTPUT_MAX_CHARS:,} chars "
-         f"(head={head}, tail={tail}, spilled={bool(key)})")
-    try:
-        import tool_spill
-        hint = tool_spill.recovery_hint(key, head, cut)
-    except Exception:
-        hint = ""
-    note = hint if hint else " Re-read the source for full content."
-    return (
-        text[:head]
-        + f"\n\n… [{cut:,} characters trimmed at source.{note}] …\n\n"
-        + text[-tail:]
-    )
+         f"(head={TOOL_OUTPUT_HEAD}, tail={TOOL_OUTPUT_TAIL})")
+    return tool_spill.cut_middle(call_id, text, TOOL_OUTPUT_HEAD, TOOL_OUTPUT_TAIL,
+                                 where="at source",
+                                 fallback=" Re-read the source for full content.")
 
 
 def _log(line: str) -> None:
@@ -91,6 +76,24 @@ def _log(line: str) -> None:
             handle.write(f"{_t.strftime('%Y-%m-%d %H:%M:%S')}  {line}\n")
     except Exception:  # pragma: no cover
         pass
+
+
+def _safe_headers(client) -> dict:
+    """A client's default headers, minus values httpx cannot encode.
+
+    The openai SDK leaves an ``Omit`` sentinel in constructor-level header
+    slots. Copying those into a raw httpx request raises "Header value must be
+    str or bytes", which killed the image-cap lookup on every session start
+    (found live 2026-11-12). Drop only the unencodable ones so auth survives.
+    """
+    headers = getattr(client, "default_headers", None)
+    if headers is None:
+        return {}
+    try:
+        headers = dict(headers)
+    except Exception:  # pragma: no cover - odd client type
+        return {}
+    return {k: v for k, v in headers.items() if isinstance(v, (str, bytes))}
 
 
 def _read_key(key_file: str, env_var: str = "OPENROUTER_API_KEY") -> str:
@@ -341,8 +344,7 @@ class OpenAICompatibleProvider(Provider):
         try:
             base = self.cfg.get("base_url", "https://openrouter.ai/api/v1")
             if httpx is not None:
-                _vh = getattr(self, "_client", None)
-                _vh = dict(_vh.default_headers) if _vh is not None else {}
+                _vh = _safe_headers(getattr(self, "_client", None))
                 resp = httpx.get(f"{base}/models", timeout=8.0, headers=_vh)
                 if resp.is_success:
                     import itertools as _it
@@ -456,7 +458,7 @@ class OpenAICompatibleProvider(Provider):
             return ""
         try:
             import asyncio as _aio
-            import mem0_switch as mem0_core
+            import mem0_v2 as mem0_core
             hits = await _aio.wait_for(
                 _aio.to_thread(mem0_core.hint, query[:2000]),
                 timeout=30.0)
@@ -780,7 +782,11 @@ class OpenAICompatibleProvider(Provider):
                                 {"type": "text", "text": f"[image: {result['path']}]"},
                             ]}]
                 else:
-                    out = await LT.dispatch(name, args, enabled, write_roots=self._write_roots())
+                    # Read/WebFetch page to our cap (contiguous + continue pointer);
+                    # everything else comes back whole so the one cut below is the
+                    # only cut, and it is made on the text that gets spilled.
+                    out = await LT.dispatch(name, args, enabled, write_roots=self._write_roots(),
+                                            max_chars=None, page_chars=TOOL_OUTPUT_MAX_CHARS)
                 return [message(tc, _truncate_tool_output(out, tc.get("id")))]
             except Exception as exc:
                 prefix = "DENIED" if isinstance(exc, LT.ToolDenied) else "ERROR"

@@ -15,6 +15,7 @@ per-turn overhead bounded as the store grows.
 """
 
 HINT_SNIPPET_WORDS = 20
+LESSON_SNIPPET_WORDS = 45      # a lesson is "do/avoid X, because Y": the because must survive
 
 HEADER = ("[memory hints — auto-retrieved from long-term memory by similarity "
           "to the message below. Possibly relevant, possibly noise; call "
@@ -24,6 +25,8 @@ HEADER = ("[memory hints — auto-retrieved from long-term memory by similarity 
 def snippet(mem: str, limit: int = HINT_SNIPPET_WORDS) -> str:
     """Clip a stored memory to a short teaser."""
     words = (mem or "").split()
+    if (mem or "").lstrip().startswith("Lesson:"):
+        limit = max(limit, LESSON_SNIPPET_WORDS)
     if len(words) <= limit:
         return mem or ""
     return " ".join(words[:limit]) + " …"

@@ -44,7 +44,7 @@ class ProcessTests(unittest.TestCase):
         for pid in result["stdout"].splitlines():
             stat = Path(f"/proc/{int(pid)}/stat")
             try:
-                self.assertEqual(stat.read_text().split()[2], "Z")
+                self.assertIn(stat.read_text().split()[2], ("Z", "X"))  # zombie or already dead
             except (FileNotFoundError, ProcessLookupError):
                 pass
 

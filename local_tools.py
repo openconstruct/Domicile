@@ -375,6 +375,22 @@ def fs_read_image_scaled(path: str, max_b64: int = 700_000, max_side: int = 1568
         side = int(side * 0.75)
 
 
+# Per-call page budget (chars), set by dispatch(). Read and WebFetch size their
+# window to it and end with a "continue from N" pointer, so no later cap ever
+# has to cut a hole in the middle of what they return.
+_PAGE_CHARS: contextvars.ContextVar = contextvars.ContextVar("lt_page_chars", default=None)
+_PAGE_FOOTER_RESERVE = 300     # room for the continuation line + any PDF/URL header
+_PAGE_MIN_CHARS = 1000
+
+
+def _page_budget(default: int) -> int:
+    """Chars of body a paged tool may return under the active budget."""
+    page = _PAGE_CHARS.get()
+    if not page:
+        return default
+    return max(_PAGE_MIN_CHARS, min(default, int(page) - _PAGE_FOOTER_RESERVE))
+
+
 def _read_bounded(path: Path, cap: int) -> bytes:
     with path.open("rb") as stream:
         data = stream.read(cap + 1)
@@ -390,11 +406,13 @@ def _format_window(picked: list[str], start: int, total: int, header: str = "") 
         return {"lines": f"{start}-{start} of {total}",
                 "content": header + f"(file has only {total} lines)"}
     rows, chars = [], 0
+    max_chars = _page_budget(READ_MAX_CHARS)
+    line_cap = min(READ_LINE_CHARS, max_chars)
     for i, line in enumerate(picked, start):
-        if len(line) > READ_LINE_CHARS:
-            line = line[:READ_LINE_CHARS] + " ...[line truncated]"
+        if len(line) > line_cap:
+            line = line[:line_cap] + " ...[line truncated]"
         row = f"{i:6d}\t{line}"
-        if rows and chars + len(row) > READ_MAX_CHARS:
+        if rows and chars + len(row) > max_chars:
             break
         rows.append(row)
         chars += len(row) + 1
@@ -634,12 +652,20 @@ def web_search(query: str, count: int = 5) -> dict:
     return {"ok": True, "tool": "WebSearch", "query": q, "content": "\n\n".join(lines)}
 
 
-def web_fetch(url: str, max_chars: int = 12000) -> dict:
-    u = str(url or "").strip()
-    if not u:
-        raise ValueError("url is empty")
-    if not (u.startswith("http://") or u.startswith("https://")):
-        raise ValueError("url must be http(s)")
+WEB_FETCH_CACHE_S = 300.0      # paging re-uses the fetched text for this long
+WEB_FETCH_CACHE_MAX = 8
+WEB_FETCH_MAX_BYTES = 10_000_000
+_WEB_CACHE: dict[str, tuple[float, str]] = {}
+_WEB_CACHE_LOCK = threading.Lock()
+
+
+def _web_text(u: str) -> str:
+    """Cleaned text of a page, cached briefly so paging sees one snapshot."""
+    now = time.time()
+    with _WEB_CACHE_LOCK:
+        hit = _WEB_CACHE.get(u)
+        if hit and now - hit[0] < WEB_FETCH_CACHE_S:
+            return hit[1]
     import httpx as _hx
     heads = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Domicile/1.0"}
     try:
@@ -648,41 +674,75 @@ def web_fetch(url: str, max_chars: int = 12000) -> dict:
             heads["x-opencode-client"] = "cchat"
     except Exception:
         pass
-    cap = max(800, min(int(max_chars or 12000), 40000))
     r = _hx.get(u, headers=heads, timeout=15, follow_redirects=True)
     r.raise_for_status()
+    if len(r.content) > WEB_FETCH_MAX_BYTES:
+        raise ValueError(f"response too large ({len(r.content):,} bytes; cap {WEB_FETCH_MAX_BYTES:,})")
     ctype = (r.headers.get("content-type") or "").lower()
-    if "html" not in ctype and "text" not in ctype and "xml" not in ctype:
-        body = r.text[:2000]
-        return {"ok": True, "tool": "WebFetch", "url": u,
-                "content": f"[non-text content-type {ctype!r}]\n{body[:800]}"}
+    if "html" not in ctype and "text" not in ctype and "xml" not in ctype and "json" not in ctype:
+        return f"[non-text content-type {ctype!r}]\n{r.text[:800]}"
     html = r.text
-    try:
-        import lxml.html as _lh
-        doc = _lh.fromstring(html)
-        for bad in doc.xpath("//script | //style | //nav | //header | //footer | //noscript | //iframe"):
-            try:
-                bad.drop_tree()
-            except Exception:
-                pass
-        text = doc.text_content() or ""
-    except Exception:
-        import re as _re
-        t = _re.sub(r"<script[^>]*>.*?</script>", " ", html, flags=_re.I | _re.S)
-        t = _re.sub(r"<style[^>]*>.*?</style>", " ", t, flags=_re.I | _re.S)
-        t = _re.sub(r"<[^>]+>", " ", t)
-        text = t
+    if "html" not in ctype and "xml" not in ctype:
+        text = html                      # plain text / json: keep line structure as-is
+    else:
+        try:
+            import lxml.html as _lh
+            doc = _lh.fromstring(html)
+            for bad in doc.xpath("//script | //style | //nav | //header | //footer | //noscript | //iframe"):
+                try:
+                    bad.drop_tree()
+                except Exception:
+                    pass
+            text = doc.text_content() or ""
+        except Exception:
+            import re as _re
+            t = _re.sub(r"<script[^>]*>.*?</script>", " ", html, flags=_re.I | _re.S)
+            t = _re.sub(r"<style[^>]*>.*?</style>", " ", t, flags=_re.I | _re.S)
+            t = _re.sub(r"<[^>]+>", " ", t)
+            text = t
     import re as _re2
     text = _re2.sub(r"[ \t]+", " ", text)
-    text = _re2.sub(r"\n{3,}", "\n\n", text)
     text = "\n".join(ln.strip() for ln in text.splitlines())
     text = _re2.sub(r"\n{3,}", "\n\n", text).strip()
     if not text:
-        text = html[:cap]
-    if len(text) > cap:
-        keep = cap // 2
-        text = text[:keep] + f"\n\n... [{len(text) - cap} chars trimmed] ...\n\n" + text[-keep:]
-    return {"ok": True, "tool": "WebFetch", "url": u, "content": text}
+        text = html
+    with _WEB_CACHE_LOCK:
+        _WEB_CACHE[u] = (now, text)
+        while len(_WEB_CACHE) > WEB_FETCH_CACHE_MAX:
+            _WEB_CACHE.pop(min(_WEB_CACHE, key=lambda k: _WEB_CACHE[k][0]))
+    return text
+
+
+def web_fetch(url: str, max_chars: int = 12000, start: int = 0) -> dict:
+    """One contiguous window of the page text. Never cuts the middle out: a
+    long page is paged with `start`, and the footer says where to continue."""
+    u = str(url or "").strip()
+    if not u:
+        raise ValueError("url is empty")
+    if not (u.startswith("http://") or u.startswith("https://")):
+        raise ValueError("url must be http(s)")
+    cap = max(800, min(int(max_chars or 12000), 40000))
+    cap = _page_budget(cap)
+    text = _web_text(u)
+    total = len(text)
+    begin = max(0, int(start or 0))
+    if begin >= total > 0:
+        return {"ok": True, "tool": "WebFetch", "url": u,
+                "content": f"(page text is only {total:,} chars; start={begin} is past the end)"}
+    end = min(total, begin + cap)
+    if end < total:
+        # Prefer to stop at a paragraph or line break inside the last 20%.
+        floor = begin + (cap * 4) // 5
+        for sep in ("\n\n", "\n", " "):
+            cut = text.rfind(sep, floor, end)
+            if cut > begin:
+                end = cut + len(sep)
+                break
+    body = text[begin:end]
+    if begin > 0 or end < total:
+        body += (f"\n[showing chars {begin:,}-{end:,} of {total:,}"
+                 + (f"; call WebFetch again with start={end} to continue]" if end < total else "; end of page]"))
+    return {"ok": True, "tool": "WebFetch", "url": u, "content": body}
 
 
 # shell
@@ -1038,10 +1098,13 @@ _SCHEMAS: dict[str, dict] = {
         }, "required": ["query"]},
     },
     "WebFetch": {
-        "description": "Fetch a URL and return cleaned text.",
+        "description": ("Fetch a URL and return cleaned text, one contiguous "
+                        "window at a time. A long page ends with a line saying "
+                        "which `start` to pass to get the next window."),
         "parameters": {"type": "object", "properties": {
             "url": {"type": "string", "description": "URL to fetch"},
-            "max_chars": {"type": "integer", "description": "Max chars to return (default 12000)"},
+            "max_chars": {"type": "integer", "description": "Max chars per window (default 12000)"},
+            "start": {"type": "integer", "description": "Char offset to start from (default 0)"},
         }, "required": ["url"]},
     },
     "ReadImage": {
@@ -1195,7 +1258,8 @@ _IMPL = {
                                                 or SHELL_TIMEOUT_S)),
     "ToolWake": lambda a: spawn_bg(a["argv"], a.get("cwd"), a.get("label")),
     "WebSearch": lambda a: web_search(a["query"], int(a.get("count") or 5)),
-    "WebFetch": lambda a: web_fetch(a["url"], int(a.get("max_chars") or 12000)),
+    "WebFetch": lambda a: web_fetch(a["url"], int(a.get("max_chars") or 12000),
+                                    int(a.get("start") or 0)),
     "ReadImage": lambda a: fs_read_image(a["path"]),
     "SetWakeup": _set_wakeup,
     "ExpressToPane": _express_to_pane,
@@ -1331,11 +1395,24 @@ async def execute(name: str, args: dict, enabled: list[str], *, trusted: bool = 
         raise
 
 
+_PAGED_TOOLS = {"Read", "WebFetch"}
+
+
 async def dispatch(name: str, args: dict, enabled: list[str], *,
-                   write_roots: list[Path] | None = None) -> str:
-    """Run one tool call and return a string for the `tool` message."""
+                   write_roots: list[Path] | None = None,
+                   max_chars: int | None = TOOL_RESULT_CHARS,
+                   page_chars: int | None = None) -> str:
+    """Run one tool call and return a string for the `tool` message.
+
+    `page_chars` is the budget Read/WebFetch size their window to (default:
+    max_chars), so they return contiguous text plus a continue-from pointer
+    instead of being cut afterwards. `max_chars=None` leaves any other
+    oversized output whole for a caller that does its own (recoverable) cut.
+    """
     if name not in enabled:
         return f"ERROR: tool {name!r} is not enabled in this phase."
+    budget = page_chars or max_chars
+    tok = _PAGE_CHARS.set(budget if name in _PAGED_TOOLS else None)
     try:
         result = await execute(name, args, enabled, write_roots=write_roots)
         text = result if isinstance(result, str) else _render(result)
@@ -1343,10 +1420,11 @@ async def dispatch(name: str, args: dict, enabled: list[str], *,
         return f"DENIED: {exc}"
     except Exception as exc:
         return f"ERROR: {type(exc).__name__}: {exc}"
-    if len(text) > TOOL_RESULT_CHARS:
-        keep = TOOL_RESULT_CHARS // 2
-        text = (text[:keep] + f"\n\n... [{len(text) - TOOL_RESULT_CHARS} chars "
-                f"trimmed] ...\n\n" + text[-keep:])
+    finally:
+        _PAGE_CHARS.reset(tok)
+    if max_chars and len(text) > max_chars:
+        import tool_spill
+        text = tool_spill.cut_middle(name, text, max_chars // 2, max_chars // 2)
     return text
 
 

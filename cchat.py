@@ -208,6 +208,7 @@ SYSTEM_PROMPT = (
 
 ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash",
                  "mcp__memory__memory_search", "mcp__memory__memory_add",
+                 "mcp__memory__memory_lesson", "mcp__memory__memory_source",
                  "mcp__memory__memory_list", "mcp__memory__memory_delete",
                  "mcp__mem2__mem2_search", "mcp__mem2__mem2_get_chunk",
                  "mcp__mem2__mem2_list_dates"]
@@ -320,7 +321,7 @@ MEM2_SERVER = Path(__file__).resolve().parent / "mem2_server.py"
 
 def mem0_python() -> Path | None:
     """Which interpreter should run the memory server, if any."""
-    if importlib.util.find_spec("mem0") is not None:
+    if importlib.util.find_spec("fastembed") is not None:   # what the memory servers need
         return Path(sys.executable)
     if MEM0_VENV_PYTHON.exists():
         return MEM0_VENV_PYTHON
@@ -341,9 +342,8 @@ async def _sdk_local_tool(name: str, args: dict, trusted: bool = False, write_ro
         result = await lt.execute(name, args, [name], trusted=trusted, write_roots=write_roots)
         text = result if isinstance(result, str) else lt._render(result)
         if len(text) > SDK_RESULT_CHARS:
-            keep = SDK_RESULT_CHARS // 2
-            text = (text[:keep] + f"\n\n... [{len(text) - SDK_RESULT_CHARS} chars "
-                    f"trimmed] ...\n\n" + text[-keep:])
+            import tool_spill
+            text = tool_spill.cut_middle(name, text, SDK_RESULT_CHARS // 2, SDK_RESULT_CHARS // 2)
         return {"content": [{"type": "text", "text": text}]}
     except lt.ToolDenied as exc:
         return {"content": [{"type": "text", "text": f"DENIED: {exc}"}], "is_error": True}
@@ -1000,7 +1000,7 @@ async def _ambient_hints(raw_text: str) -> str:
     if not query:
         return ""
     try:
-        import mem0_switch as mem0_core
+        import mem0_v2 as mem0_core
         hits = await asyncio.wait_for(
             asyncio.to_thread(mem0_core.hint, query[:2000]), timeout=30.0)
     except Exception:
@@ -2913,7 +2913,7 @@ class CCChat(App):
                                                  name="mem0-ipc-serve")
 
         def _warm():
-            import mem0_switch as mem0_core
+            import mem0_v2 as mem0_core
             mem0_core.store()
 
         try:
