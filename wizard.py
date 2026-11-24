@@ -153,7 +153,9 @@ class ContextStep(Step):
         yield Static("[dim]Advanced - fill ceiling to override the derived values:[/dim]")
         yield from _field("Ceiling", "ceiling")
         yield from _field("Floor (optional)", "floor")
-        yield from _field("Memory budget (optional)", "mem1")
+        yield Static("[dim]Injected memory: the memory files loaded into every conversation. "
+                     "Blank derives it from the window.[/dim]")
+        yield from _field("Injected memory budget (tokens, optional)", "mem1")
 
     def _num(self, wid):
         v = self.val(wid)

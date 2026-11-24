@@ -119,7 +119,7 @@ def prepare(mode: str, user_name: str, agent_name: str = "",
         if cost > caps[name]:
             raise PersonaError(
                 f"{name} is ~{cost:,} tokens; its cap is {caps[name]:,}. "
-                "Increase the mem1 budget in Context, set a larger per-file cap "
+                "Increase the injected memory budget in Context, set a larger per-file cap "
                 "in config.json, or trim this source file. Nothing was written.")
     used = sum(mem1.text_tokens(content) for content in files.values())
     limit = sum(caps.values())  # the loader uses sum of scaled per-file caps

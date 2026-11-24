@@ -27,7 +27,7 @@ def check(name: str, text: str, caps: dict[str, int], others: dict[str, str]) ->
     if cost > cap:
         problems.append(f"{name} is {cost - cap:,} tokens over its {cap:,} cap")
     if total > limit:
-        problems.append(f"mem1 total is {total - limit:,} tokens over its {limit:,} cap")
+        problems.append(f"injected memory total is {total - limit:,} tokens over its {limit:,} cap")
     return {"cost": cost, "cap": cap, "total": total, "limit": limit,
             "problems": problems, "ok": not problems}
 
@@ -92,7 +92,7 @@ class EditorScreen(Screen):
         color = "green" if s["ok"] else "red"
         dirty = " [yellow]*unsaved[/yellow]" if text != self.clean else ""
         line = (f"[{color}]{self.fname}: ~{s['cost']:,} / {s['cap']:,} tokens[/{color}]"
-                f"   mem1 total ~{s['total']:,} / {s['limit']:,}{dirty}")
+                f"   injected memory total ~{s['total']:,} / {s['limit']:,}{dirty}")
         if s["problems"]:
             line += "\n[red]" + "; ".join(s["problems"]) + " - cut before saving.[/red]"
         if note:

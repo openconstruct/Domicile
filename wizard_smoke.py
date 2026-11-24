@@ -62,7 +62,7 @@ def run(mem_dir: Path | None = None, identity_path: Path | None = None,
             continue
         used += cost
         add(f, cost <= caps[f], f"~{cost:,} / {caps[f]:,} tokens")
-    add("mem1 total fits", used <= sum(caps.values()), f"~{used:,} / {sum(caps.values()):,}")
+    add("injected memory fits", used <= sum(caps.values()), f"~{used:,} / {sum(caps.values()):,}")
 
     missing = [n for n in ("cchat.service", "cchat-watchdog.service", "cchat-watchdog.timer")
                if not (unit_dir / n).exists()]

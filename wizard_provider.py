@@ -143,7 +143,7 @@ def custom_context(ceiling: int, mem1_total: int | None = None,
         mem1 = None if mem1_total in (None, "") else int(mem1_total)
         fl = None if floor in (None, "") else int(floor)
     except (TypeError, ValueError):
-        raise WizardError("Ceiling, floor and memory budget must be whole "
+        raise WizardError("Ceiling, floor and injected memory budget must be whole "
                           "numbers of tokens.")
     if fl is not None and fl < cd.MIN_COMPACT_FLOOR:
         raise WizardError(f"Floor must be at least {cd.MIN_COMPACT_FLOOR:,} tokens: "
@@ -154,7 +154,7 @@ def custom_context(ceiling: int, mem1_total: int | None = None,
                           f"(floor + {cd.COMPACT_HEADROOM:,}); lower and "
                           "every turn would trigger a compaction.")
     if mem1 is not None and mem1 < 1_000:
-        raise WizardError("Memory budget under 1,000 tokens leaves nothing to load.")
+        raise WizardError("Injected memory budget under 1,000 tokens leaves nothing to load.")
     ctx = {"compact_ceiling_tokens": ceiling}
     if fl is not None:
         ctx["compact_floor_tokens"] = fl
